@@ -1,0 +1,36 @@
+import { http } from "@/services/http";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
+import type { Questao, QuestaoFilters, QuestaoFormData } from "@/types/question";
+
+function buildQuery(filters: QuestaoFilters) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      params.set(key, String(value));
+    }
+  });
+  return params.toString();
+}
+
+export function listQuestions(filters: QuestaoFilters = {}) {
+  const query = buildQuery(filters);
+  return http<ApiResponse<PaginatedResponse<Questao>>>(`/api/questions${query ? `?${query}` : ""}`);
+}
+
+export function createQuestion(data: QuestaoFormData) {
+  return http<ApiResponse<Questao>>("/api/questions", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function updateQuestion(id: number, data: QuestaoFormData) {
+  return http<ApiResponse<Questao>>(`/api/questions/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data)
+  });
+}
+
+export function deleteQuestion(id: number) {
+  return http<ApiResponse<null>>(`/api/questions/${id}`, { method: "DELETE" });
+}
