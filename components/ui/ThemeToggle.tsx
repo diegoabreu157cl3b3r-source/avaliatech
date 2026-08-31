@@ -43,9 +43,9 @@ export function ThemeToggle() {
       aria-label={label}
       title={label}
       onClick={toggleTheme}
-      className="fixed bottom-6 right-6 z-50 inline-flex h-16 w-16 items-center justify-center rounded-full border-4 border-slate-200 bg-white text-slate-700 shadow-lg transition hover:scale-105 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-800 dark:text-yellow-300 dark:hover:bg-slate-700"
+      className="fixed bottom-6 right-6 z-50 inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-slate-700 shadow-lg transition hover:scale-105 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
     >
-      {isReady && <Icon className="h-10 w-10" strokeWidth={2.25} />}
+      {isReady && <Icon className="h-5 w-5" strokeWidth={2.25} />}
     </button>
   );
 }

@@ -116,6 +116,14 @@ mysql -u root -p < database/schema.sql
 
 O script cria o banco `avaliatech` e todas as tabelas automaticamente.
 
+### Atualizando um banco existente
+
+Se o banco foi criado antes do suporte a imagens nas questões, execute a migração uma única vez:
+
+```bash
+mysql -u root -p avaliatech < database/migrations/20260831_add_question_image.sql
+```
+
 ### 4. Rode o projeto
 
 ```bash
