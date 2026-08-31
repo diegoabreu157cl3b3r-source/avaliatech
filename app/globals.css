@@ -12,6 +12,7 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 17px;
 }
 
 body {
@@ -20,37 +21,56 @@ body {
   color: #0f172a;
 }
 
-html.dark body,
-html.dark .bg-slate-50 {
+.dark {
+  color-scheme: dark;
+}
+
+.dark body,
+.dark .bg-slate-50 {
   background-color: #0f172a;
 }
 
-html.dark .bg-white {
+.dark .bg-white,
+.dark .card {
   background-color: #1e293b;
 }
 
-html.dark .bg-white\/90 {
+.dark header {
+  border-color: #475569;
   background-color: rgb(30 41 59 / 0.9);
 }
 
-html.dark .border-slate-200 {
+.dark .bg-slate-100 {
+  background-color: #334155;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-300 {
   border-color: #475569;
 }
 
-html.dark .text-slate-900,
-html.dark .text-slate-700 {
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
   color: #f8fafc;
 }
 
-html.dark .text-slate-600,
-html.dark .text-slate-500,
-html.dark .text-slate-400 {
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400 {
   color: #cbd5e1;
 }
 
-html.dark .bg-slate-100,
-html.dark .hover\:bg-slate-50:hover {
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-200:hover {
   background-color: #334155;
+}
+
+.dark .field {
+  border-color: #475569;
+  background-color: #1e293b;
+  color: #f8fafc;
 }
 
 input,

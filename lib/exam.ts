@@ -38,6 +38,7 @@ export function buildQuestionForExam(question: Questao): QuestaoDaProva {
   return {
     id: question.id,
     pergunta: question.pergunta,
+    imagem: question.imagem,
     disciplina: question.disciplina,
     assunto: question.assunto,
     dificuldade: question.dificuldade,

@@ -1,6 +1,6 @@
 import { http } from "@/services/http";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
-import type { Questao, QuestaoFilters, QuestaoFormData } from "@/types/question";
+import type { GenerateQuestionsRequest, GenerateQuestionsResponse, Questao, QuestaoFilters, QuestaoFormData } from "@/types/question";
 
 function buildQuery(filters: QuestaoFilters) {
   const params = new URLSearchParams();
@@ -24,6 +24,13 @@ export function createQuestion(data: QuestaoFormData) {
   });
 }
 
+export function generateQuestionsWithAI(data: GenerateQuestionsRequest) {
+  return http<ApiResponse<GenerateQuestionsResponse>>("/api/ai/generate-questions", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
 export function updateQuestion(id: number, data: QuestaoFormData) {
   return http<ApiResponse<Questao>>(`/api/questions/${id}`, {
     method: "PUT",
@@ -33,4 +40,14 @@ export function updateQuestion(id: number, data: QuestaoFormData) {
 
 export function deleteQuestion(id: number) {
   return http<ApiResponse<null>>(`/api/questions/${id}`, { method: "DELETE" });
+}
+
+export async function uploadQuestionImage(file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await fetch("/api/uploads/questions", { method: "POST", body: formData });
+  const data = await response.json() as ApiResponse<{ url: string }>;
+  if (!response.ok) throw new Error(data.message ?? "Não foi possível enviar a imagem.");
+  if (!data.data?.url) throw new Error("O servidor não retornou a URL da imagem.");
+  return data.data.url;
 }

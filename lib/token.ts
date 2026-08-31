@@ -15,7 +15,7 @@ function getSecret() {
 }
 
 export async function createToken(payload: AuthPayload) {
-  return new SignJWT(payload)
+  return new SignJWT({ id: payload.id, nome: payload.nome, email: payload.email })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(payload.id))
     .setIssuedAt()

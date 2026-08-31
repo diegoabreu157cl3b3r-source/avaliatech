@@ -3,6 +3,8 @@
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
+const THEME_STORAGE_KEY = "avaliatech-theme";
+
 type Theme = "light" | "dark";
 
 function applyTheme(theme: Theme) {
@@ -15,13 +17,19 @@ export function ThemeToggle() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    applyTheme("light");
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const initialTheme: Theme = savedTheme === "dark" ? "dark" : "light";
+
+    setTheme(initialTheme);
+    applyTheme(initialTheme);
     setIsReady(true);
   }, []);
 
   function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
+    const nextTheme: Theme = theme === "light" ? "dark" : "light";
+
     setTheme(nextTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     applyTheme(nextTheme);
   }
 

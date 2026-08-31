@@ -20,6 +20,7 @@ export const loginSchema = z.object({
 
 export const questionSchema = z.object({
   pergunta: z.string().min(5, "Informe a pergunta."),
+  imagem: z.string().max(255).nullable().optional(),
   alternativa_a: z.string().min(1, "Informe a alternativa A."),
   alternativa_b: z.string().min(1, "Informe a alternativa B."),
   alternativa_c: z.string().min(1, "Informe a alternativa C."),
@@ -30,11 +31,22 @@ export const questionSchema = z.object({
   dificuldade: z.enum(DIFICULDADES)
 });
 
+export const generateQuestionsSchema = z.object({
+  disciplina: z.string().trim().min(2, "Informe a disciplina.").max(120),
+  assunto: z.string().trim().min(2, "Informe o assunto.").max(120),
+  dificuldade: z.enum(DIFICULDADES),
+  quantidade: z.coerce.number().pipe(
+    z.union([z.literal(1), z.literal(5), z.literal(10), z.literal(15), z.literal(20)], {
+      errorMap: () => ({ message: "A quantidade deve ser 1, 5, 10, 15 ou 20." })
+    })
+  )
+});
+
 export const generateExamSchema = z.object({
   escola: z.string().min(2, "Informe a escola."),
   professor: z.string().min(2, "Informe o professor."),
   disciplina: z.string().min(2, "Informe a disciplina."),
-  assunto: z.string().min(2, "Informe o assunto."),
+  assuntos: z.array(z.string().trim().min(2, "Informe um assunto.").max(120)).min(1, "Selecione pelo menos um assunto.").max(20),
   dificuldade: z.enum(DIFICULDADES),
   quantidadeQuestoes: z.coerce.number().refine((value) => QUANTIDADES_PROVA.includes(value as 10 | 15 | 20 | 25), {
     message: "A quantidade deve ser 10, 15, 20 ou 25."

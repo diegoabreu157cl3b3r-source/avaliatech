@@ -20,7 +20,7 @@ export interface GenerateExamRequest {
   escola: string;
   professor: string;
   disciplina: string;
-  assunto: string;
+  assuntos: string[];
   dificuldade: Dificuldade;
   quantidadeQuestoes: 10 | 15 | 20 | 25;
   dataProva: string;
@@ -35,7 +35,7 @@ export interface AlternativaEmbaralhada {
   original: AlternativaCorreta;
 }
 
-export interface QuestaoDaProva extends Pick<Questao, "id" | "pergunta" | "disciplina" | "assunto" | "dificuldade"> {
+export interface QuestaoDaProva extends Pick<Questao, "id" | "pergunta" | "imagem" | "disciplina" | "assunto" | "dificuldade"> {
   alternativas: AlternativaEmbaralhada[];
   corretaFinal: AlternativaCorreta;
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Download, ImagePlus } from "lucide-react";
+import { Download, ImagePlus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { SuggestionInput } from "@/components/ui/SuggestionInput";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { DIFICULDADES, QUANTIDADES_PROVA } from "@/lib/constants";
@@ -22,7 +23,7 @@ export function ExamGeneratorForm() {
     escola: "",
     professor: "",
     disciplina: "",
-    assunto: "",
+    assuntos: [],
     dificuldade: "Fácil",
     quantidadeQuestoes: 10,
     dataProva: today,
@@ -30,6 +31,7 @@ export function ExamGeneratorForm() {
     logoBase64: null,
     logoMime: null
   });
+  const [subjectDraft, setSubjectDraft] = useState("");
 
   useEffect(() => {
     async function loadProfile() {
@@ -56,6 +58,20 @@ export function ExamGeneratorForm() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateDiscipline(disciplina: string) {
+    setForm((current) => ({ ...current, disciplina, assuntos: current.disciplina === disciplina ? current.assuntos : [] }));
+    setSubjectDraft("");
+  }
+
+  function addSubject(assunto: string) {
+    setForm((current) => current.assuntos.includes(assunto) ? current : { ...current, assuntos: [...current.assuntos, assunto] });
+    setSubjectDraft("");
+  }
+
+  function removeSubject(assunto: string) {
+    setForm((current) => ({ ...current, assuntos: current.assuntos.filter((item) => item !== assunto) }));
+  }
+
   function handleLogoChange(file?: File) {
     if (!file) return;
     if (!["image/png", "image/jpeg"].includes(file.type)) {
@@ -78,6 +94,10 @@ export function ExamGeneratorForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (form.assuntos.length === 0) {
+      showToast("Selecione pelo menos um assunto.", "error");
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -110,10 +130,47 @@ export function ExamGeneratorForm() {
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Nome da escola" value={form.escola} onChange={(event) => update("escola", event.target.value)} required />
           <Input label="Nome do professor" value={form.professor} onChange={(event) => update("professor", event.target.value)} required />
-          <Input label="Disciplina" value={form.disciplina} onChange={(event) => update("disciplina", event.target.value)} required />
-          <Input label="Assunto" value={form.assunto} onChange={(event) => update("assunto", event.target.value)} required />
+          <SuggestionInput
+            label="Disciplina"
+            type="discipline"
+            value={form.disciplina}
+            onChange={updateDiscipline}
+            onSelect={updateDiscipline}
+            placeholder="Digite para buscar disciplinas"
+          />
           <Input label="Data da prova" type="date" value={form.dataProva} onChange={(event) => update("dataProva", event.target.value)} required />
           <Input label="Valor da avaliação" value={form.valorAvaliacao} onChange={(event) => update("valorAvaliacao", event.target.value)} placeholder="Ex.: 10,0" required />
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="label">Assuntos</p>
+              <p className="text-xs text-slate-500">Selecione um ou mais assuntos da disciplina escolhida.</p>
+            </div>
+            {form.assuntos.length > 0 && <button type="button" onClick={() => update("assuntos", [])} className="text-xs font-bold text-brand-700 hover:text-brand-900">Limpar seleção</button>}
+          </div>
+          {form.assuntos.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {form.assuntos.map((assunto) => (
+                <span key={assunto} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-800">
+                  {assunto}
+                  <button type="button" onClick={() => removeSubject(assunto)} aria-label={`Remover ${assunto}`} className="rounded-full p-0.5 hover:bg-brand-100"><X className="h-3.5 w-3.5" /></button>
+                </span>
+              ))}
+            </div>
+          )}
+          <SuggestionInput
+            label="Adicionar assunto"
+            type="subject"
+            value={subjectDraft}
+            onChange={setSubjectDraft}
+            onSelect={addSubject}
+            discipline={form.disciplina}
+            disabled={!form.disciplina}
+            placeholder={form.disciplina ? "Digite para buscar assuntos" : "Escolha uma disciplina primeiro"}
+          />
+          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500"><Plus className="h-3.5 w-3.5" /> Selecione uma sugestão para adicionar o assunto.</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

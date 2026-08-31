@@ -1,4 +1,5 @@
 import mysql, { type Pool } from "mysql2/promise";
+import type { ExecuteValues } from "mysql2";
 
 const requiredEnv = ["DB_HOST", "DB_USER", "DB_NAME"] as const;
 for (const key of requiredEnv) {
@@ -31,7 +32,7 @@ if (process.env.NODE_ENV !== "production") {
   global.mysqlPool = db;
 }
 
-export async function query<T>(sql: string, params: Record<string, unknown> | unknown[] = []) {
+export async function query<T>(sql: string, params: ExecuteValues | ExecuteValues[] = []) {
   const [rows] = await db.execute(sql, params);
   return rows as T;
 }

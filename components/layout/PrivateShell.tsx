@@ -23,7 +23,7 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 lg:pl-72">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="min-w-0 flex-1">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />

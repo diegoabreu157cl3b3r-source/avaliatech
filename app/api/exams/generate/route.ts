@@ -10,6 +10,10 @@ import { isValidLogo } from "@/lib/upload";
 import type { Questao } from "@/types/question";
 import type { GenerateExamRequest } from "@/types/exam";
 
+function createSubjectParams(subjects: string[]) {
+  return Object.fromEntries(subjects.map((subject, index) => [`assunto${index}`, subject]));
+}
+
 export async function POST(request: Request) {
   try {
     const user = await requireAuth();
@@ -25,7 +29,7 @@ export async function POST(request: Request) {
       escola: cleanText(parsed.data.escola),
       professor: cleanText(parsed.data.professor),
       disciplina: cleanText(parsed.data.disciplina),
-      assunto: cleanText(parsed.data.assunto),
+      assuntos: [...new Set(parsed.data.assuntos.map(cleanText).filter(Boolean))],
       dificuldade: parsed.data.dificuldade,
       quantidadeQuestoes: parsed.data.quantidadeQuestoes as 10 | 15 | 20 | 25,
       dataProva: parsed.data.dataProva,
@@ -34,25 +38,43 @@ export async function POST(request: Request) {
       logoMime: parsed.data.logoMime ?? null
     };
 
+    if (data.assuntos.length === 0) return fail("Selecione pelo menos um assunto.", 422);
+
+    const subjectParams = createSubjectParams(data.assuntos);
+    const subjectPlaceholders = data.assuntos.map((_, index) => `:assunto${index}`).join(", ");
+
+    const availableSubjects = await query<{ assunto: string }[]>(
+      `SELECT DISTINCT assunto
+       FROM questoes
+       WHERE usuario_id = :usuarioId
+         AND disciplina = :disciplina
+         AND assunto IN (${subjectPlaceholders})`,
+      { usuarioId: user.id, disciplina: data.disciplina, ...subjectParams }
+    );
+
+    if (availableSubjects.length !== data.assuntos.length) {
+      return fail("Um ou mais assuntos não pertencem à disciplina selecionada.", 422);
+    }
+
     const compatibleQuestions = await query<Questao[]>(
-      `SELECT id, usuario_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta,
+      `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta,
               disciplina, assunto, dificuldade, created_at, updated_at
        FROM questoes
        WHERE usuario_id = :usuarioId
          AND disciplina = :disciplina
-         AND assunto = :assunto
+         AND assunto IN (${subjectPlaceholders})
          AND dificuldade = :dificuldade`,
       {
         usuarioId: user.id,
         disciplina: data.disciplina,
-        assunto: data.assunto,
+        ...subjectParams,
         dificuldade: data.dificuldade
       }
     );
 
     if (compatibleQuestions.length < data.quantidadeQuestoes) {
       return fail(
-        `Questões insuficientes. Foram encontradas ${compatibleQuestions.length} questões compatíveis, mas a prova solicita ${data.quantidadeQuestoes}.`,
+        `Não existem questões suficientes para gerar esta prova. Foram encontradas ${compatibleQuestions.length} questões, mas são necessárias ${data.quantidadeQuestoes}.`,
         422
       );
     }
@@ -69,7 +91,7 @@ export async function POST(request: Request) {
         escola: data.escola,
         professor: data.professor,
         disciplina: data.disciplina,
-        assunto: data.assunto,
+        assunto: data.assuntos.join(", "),
         dificuldade: data.dificuldade,
         quantidade: data.quantidadeQuestoes,
         dataProva: data.dataProva,

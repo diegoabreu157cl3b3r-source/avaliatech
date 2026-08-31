@@ -34,7 +34,7 @@ export default function PerfilPage() {
             nome: response.data?.nome ?? "",
             email: response.data?.email ?? "",
             logoBase64: response.data?.logo_base64 ?? null,
-            logoMime: response.data?.logo_mime ?? null
+            logoMime: response.data?.logo_mime === "image/png" || response.data?.logo_mime === "image/jpeg" ? response.data.logo_mime : null
           }));
           setLogoPreview(response.data.logo_base64 ?? null);
         }

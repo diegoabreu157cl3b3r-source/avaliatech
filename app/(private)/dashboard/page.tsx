@@ -7,10 +7,10 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { getDashboardStats, type DashboardStats } from "@/services/dashboard-service";
 
 const cards = [
-  { key: "totalQuestoes", label: "Questões", icon: FileText },
-  { key: "totalDisciplinas", label: "Disciplinas", icon: BookOpen },
-  { key: "totalAssuntos", label: "Assuntos", icon: Layers },
-  { key: "totalProvas", label: "Provas geradas", icon: Trophy }
+  { key: "totalQuestoes", label: "Questões", icon: FileText, href: "/questoes" },
+  { key: "totalDisciplinas", label: "Disciplinas", icon: BookOpen, href: "/questoes" },
+  { key: "totalAssuntos", label: "Assuntos", icon: Layers, href: "/questoes" },
+  { key: "totalProvas", label: "Provas geradas", icon: Trophy, href: "/provas" }
 ] as const;
 
 export default function DashboardPage() {
@@ -55,7 +55,12 @@ export default function DashboardPage() {
               const Icon = card.icon;
               const value = stats?.[card.key] ?? 0;
               return (
-                <article key={card.key} className="card">
+                <Link
+                  key={card.key}
+                  href={card.href}
+                  aria-label={`Ver ${card.label.toLowerCase()}`}
+                  className="card block cursor-pointer transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-500">{card.label}</p>
@@ -65,7 +70,7 @@ export default function DashboardPage() {
                       <Icon className="h-6 w-6" />
                     </span>
                   </div>
-                </article>
+                </Link>
               );
             })}
       </section>

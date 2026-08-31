@@ -10,10 +10,10 @@ const features = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-brand-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-brand-900 dark:text-white">
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-brand-900 text-white">
       <section className="container-app flex min-h-screen flex-col justify-center py-10">
         <div className="max-w-3xl">
-          <span className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-700 dark:border-white/20 dark:bg-white/10 dark:text-brand-100">
+          <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-brand-100">
             Plataforma acadêmica para professores
           </span>
 
@@ -21,15 +21,15 @@ export default function HomePage() {
             AvaliaTech
           </h1>
 
-          <p className="mt-5 text-lg leading-8 text-slate-600 dark:text-slate-200">
+          <p className="mt-5 text-lg leading-8 text-slate-200">
             Crie questões, filtre seu banco, gere provas automaticamente em duas versões e exporte tudo em PDF com gabarito confiável.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/cadastro" className="inline-flex items-center justify-center rounded-2xl bg-brand-700 px-5 py-3 font-bold text-white transition hover:bg-brand-600 dark:bg-white dark:text-slate-950 dark:hover:bg-brand-100">
+            <Link href="/cadastro" className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-bold text-slate-950 transition hover:bg-brand-100">
               Começar agora <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
-            <Link href="/login" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-800 transition hover:bg-white/70 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+            <Link href="/login" className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 font-bold text-white transition hover:bg-white/10">
               Entrar
             </Link>
           </div>
@@ -39,10 +39,10 @@ export default function HomePage() {
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <article key={feature.title} className="rounded-3xl border border-slate-200 bg-white/70 p-5 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/10 dark:shadow-none">
-                <Icon className="h-8 w-8 text-brand-700 dark:text-brand-100" />
+              <article key={feature.title} className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                <Icon className="h-8 w-8 text-brand-100" />
                 <h2 className="mt-4 font-bold">{feature.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{feature.description}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{feature.description}</p>
               </article>
             );
           })}

@@ -25,6 +25,7 @@ CREATE TABLE questoes (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   usuario_id INT UNSIGNED NOT NULL,
   pergunta TEXT NOT NULL,
+  imagem VARCHAR(255) NULL,
   alternativa_a TEXT NOT NULL,
   alternativa_b TEXT NOT NULL,
   alternativa_c TEXT NOT NULL,

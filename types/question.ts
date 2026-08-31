@@ -5,6 +5,7 @@ export interface Questao {
   id: number;
   usuario_id: number;
   pergunta: string;
+  imagem: string | null;
   alternativa_a: string;
   alternativa_b: string;
   alternativa_c: string;
@@ -19,6 +20,7 @@ export interface Questao {
 
 export interface QuestaoFormData {
   pergunta: string;
+  imagem?: string | null;
   alternativa_a: string;
   alternativa_b: string;
   alternativa_c: string;
@@ -36,4 +38,17 @@ export interface QuestaoFilters {
   disciplina?: string;
   assunto?: string;
   dificuldade?: string;
+}
+
+export interface AIQuestion extends Omit<QuestaoFormData, "imagem"> {}
+
+export interface GenerateQuestionsRequest {
+  disciplina: string;
+  assunto: string;
+  dificuldade: Dificuldade;
+  quantidade: 1 | 5 | 10 | 15 | 20;
+}
+
+export interface GenerateQuestionsResponse {
+  questions: AIQuestion[];
 }

@@ -24,6 +24,7 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
         <table className="w-full min-w-[820px] text-left text-sm">
           <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-500">
             <tr>
+              <th className="px-4 py-3">Imagem</th>
               <th className="px-4 py-3">Pergunta</th>
               <th className="px-4 py-3">Disciplina</th>
               <th className="px-4 py-3">Assunto</th>
@@ -35,6 +36,7 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
           <tbody className="divide-y divide-slate-200">
             {data.items.map((question) => (
               <tr key={question.id} className="bg-white align-top hover:bg-slate-50">
+                <td className="px-4 py-4">{question.imagem ? <img src={question.imagem} alt="Imagem da questão" className="h-12 w-16 rounded-lg border border-slate-200 object-cover" /> : <span className="text-xs text-slate-400">Sem imagem</span>}</td>
                 <td className="max-w-sm px-4 py-4 font-semibold text-slate-900">{question.pergunta}</td>
                 <td className="px-4 py-4 text-slate-600">{question.disciplina}</td>
                 <td className="px-4 py-4 text-slate-600">{question.assunto}</td>
