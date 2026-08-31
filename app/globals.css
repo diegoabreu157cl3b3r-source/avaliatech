@@ -20,6 +20,39 @@ body {
   color: #0f172a;
 }
 
+html.dark body,
+html.dark .bg-slate-50 {
+  background-color: #0f172a;
+}
+
+html.dark .bg-white {
+  background-color: #1e293b;
+}
+
+html.dark .bg-white\/90 {
+  background-color: rgb(30 41 59 / 0.9);
+}
+
+html.dark .border-slate-200 {
+  border-color: #475569;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-700 {
+  color: #f8fafc;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #cbd5e1;
+}
+
+html.dark .bg-slate-100,
+html.dark .hover\:bg-slate-50:hover {
+  background-color: #334155;
+}
+
 input,
 select,
 textarea,
