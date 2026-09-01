@@ -2,6 +2,8 @@ import { query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { fail, handleApiError, ok } from "@/lib/response";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await requireAuth();

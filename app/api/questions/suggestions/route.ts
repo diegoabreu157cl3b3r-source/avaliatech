@@ -3,6 +3,8 @@ import { requireAuth } from "@/lib/auth";
 import { cleanOptionalText } from "@/lib/sanitizers";
 import { fail, handleApiError, ok } from "@/lib/response";
 
+export const dynamic = "force-dynamic";
+
 const MAX_SUGGESTIONS = 10;
 
 export async function GET(request: Request) {

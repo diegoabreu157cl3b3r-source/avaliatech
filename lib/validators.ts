@@ -39,7 +39,8 @@ export const generateQuestionsSchema = z.object({
     z.union([z.literal(1), z.literal(5), z.literal(10), z.literal(15), z.literal(20)], {
       errorMap: () => ({ message: "A quantidade deve ser 1, 5, 10, 15 ou 20." })
     })
-  )
+  ),
+  descricao: z.string().max(1000, "A descrição deve ter no máximo 1000 caracteres.").optional().nullable()
 });
 
 export const generateExamSchema = z.object({

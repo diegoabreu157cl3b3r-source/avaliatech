@@ -12,6 +12,7 @@ export interface Prova {
   versao: string;
   data_prova: string | null;
   valor_avaliacao: string | null;
+  dados_json?: string | null;
   data_geracao: string;
   created_at: string;
 }
@@ -44,3 +45,10 @@ export interface VersaoProva {
   versao: "A" | "B";
   questoes: QuestaoDaProva[];
 }
+
+export interface ExamDataPayload {
+  header: GenerateExamRequest;
+  versionA: VersaoProva;
+  versionB: VersaoProva;
+}
+

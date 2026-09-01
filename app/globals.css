@@ -17,59 +17,17 @@ html {
 
 body {
   min-height: 100vh;
-  background: #f8fafc;
+  background-color: #f8fafc;
   color: #0f172a;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dark {
   color-scheme: dark;
 }
 
-.dark body,
-.dark .bg-slate-50 {
-  background-color: #0f172a;
-}
-
-.dark .bg-white,
-.dark .card {
-  background-color: #1e293b;
-}
-
-.dark header {
-  border-color: #475569;
-  background-color: rgb(30 41 59 / 0.9);
-}
-
-.dark .bg-slate-100 {
-  background-color: #334155;
-}
-
-.dark .border-slate-200,
-.dark .border-slate-300 {
-  border-color: #475569;
-}
-
-.dark .text-slate-900,
-.dark .text-slate-800,
-.dark .text-slate-700 {
-  color: #f8fafc;
-}
-
-.dark .text-slate-600,
-.dark .text-slate-500,
-.dark .text-slate-400 {
-  color: #cbd5e1;
-}
-
-.dark .hover\:bg-slate-50:hover,
-.dark .hover\:bg-slate-100:hover,
-.dark .hover\:bg-slate-200:hover {
-  background-color: #334155;
-}
-
-.dark .field {
-  border-color: #475569;
-  background-color: #1e293b;
+.dark body {
+  background-color: #090d16;
   color: #f8fafc;
 }
 
@@ -86,14 +44,37 @@ button {
   }
 
   .card {
-    @apply rounded-3xl border border-slate-200 bg-white p-5 shadow-soft;
+    @apply rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-colors;
+  }
+
+  .dark .card {
+    border-color: #1e293b;
+    background-color: #0f172a;
+    color: #f8fafc;
   }
 
   .label {
     @apply text-sm font-semibold text-slate-700;
   }
 
+  .dark .label {
+    color: #cbd5e1;
+  }
+
   .field {
     @apply mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100;
   }
+
+  .dark .field {
+    border-color: #334155;
+    background-color: #1e293b;
+    color: #f8fafc;
+  }
+
+  .dark .field:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(12, 74, 110, 0.4);
+  }
 }
+
+

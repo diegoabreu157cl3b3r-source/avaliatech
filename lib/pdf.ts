@@ -63,13 +63,29 @@ export function drawAlternatives(page: PDFPage, font: PDFFont, alternatives: str
   let cursor = y; alternatives.forEach((lines) => { cursor = drawTextLines(page, font, lines, x, cursor, size, lineHeight); }); return cursor;
 }
 
+export function formatExamDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const trimmed = dateStr.trim();
+  const matchIso = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (matchIso) {
+    const [, year, month, day] = matchIso;
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  }
+  const matchBr = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (matchBr) {
+    const [, day, month, year] = matchBr;
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  }
+  return trimmed;
+}
+
 export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: PdfHeaderData, title: string) {
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica); const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold); const top = PAGE.height - LAYOUT.margin;
   page.drawRectangle({ x: LAYOUT.margin, y: top - 92, width: PAGE.width - LAYOUT.margin * 2, height: 92, color: rgb(.94, .98, 1), borderColor: rgb(.72, .84, .92), borderWidth: .8 });
   const logo = parseDataUrl(header.logoBase64);
   if (logo) { try { const image = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes); const scale = Math.min(58 / image.width, 58 / image.height); page.drawImage(image, { x: LAYOUT.margin + 12, y: top - 72, width: image.width * scale, height: image.height * scale }); } catch { page.drawText("LOGO", { x: LAYOUT.margin + 25, y: top - 43, size: 8, font: bold }); } } else page.drawText("LOGO", { x: LAYOUT.margin + 25, y: top - 43, size: 8, font: bold });
   page.drawText(title, { x: LAYOUT.margin + 82, y: top - 22, size: 13, font: bold, color: rgb(.03, .19, .34) });
-  page.drawText(`Escola: ${header.escola}`, { x: LAYOUT.margin + 82, y: top - 39, size: 9, font: regular }); page.drawText(`Professor(a): ${header.professor}`, { x: LAYOUT.margin + 82, y: top - 54, size: 9, font: regular }); page.drawText(`Disciplina: ${header.disciplina}`, { x: LAYOUT.margin + 82, y: top - 69, size: 9, font: regular }); page.drawText(`Data: ${header.dataProva}   Valor: ${header.valorAvaliacao}`, { x: LAYOUT.margin + 82, y: top - 84, size: 9, font: regular });
+  page.drawText(`Escola: ${header.escola}`, { x: LAYOUT.margin + 82, y: top - 39, size: 9, font: regular }); page.drawText(`Professor(a): ${header.professor}`, { x: LAYOUT.margin + 82, y: top - 54, size: 9, font: regular }); page.drawText(`Disciplina: ${header.disciplina}`, { x: LAYOUT.margin + 82, y: top - 69, size: 9, font: regular }); page.drawText(`Data: ${formatExamDate(header.dataProva)}   Valor: ${header.valorAvaliacao}`, { x: LAYOUT.margin + 82, y: top - 84, size: 9, font: regular });
   const fieldY = top - 112; page.drawText("Nome:", { x: LAYOUT.margin, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 34, y: fieldY - 1 }, end: { x: LAYOUT.margin + 235, y: fieldY - 1 }, thickness: .5 }); page.drawText("Escola:", { x: LAYOUT.margin + 248, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 288, y: fieldY - 1 }, end: { x: LAYOUT.margin + 430, y: fieldY - 1 }, thickness: .5 }); page.drawText("Turma:", { x: LAYOUT.margin + 443, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 480, y: fieldY - 1 }, end: { x: PAGE.width - LAYOUT.margin, y: fieldY - 1 }, thickness: .5 });
   return fieldY - 20;
 }

@@ -14,3 +14,24 @@ export async function generateExamPdf(data: GenerateExamRequest) {
 
   return response.blob();
 }
+
+export async function downloadHistoricalExamPdf(id: number): Promise<Blob> {
+  const response = await fetch(`/api/exams/${id}/pdf`, {
+    method: "GET",
+    headers: { "Cache-Control": "no-cache" }
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Não foi possível baixar o PDF da prova.";
+    try {
+      const json = await response.json();
+      if (json.message) errorMessage = json.message;
+    } catch {
+      // Not JSON
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.blob();
+}
+

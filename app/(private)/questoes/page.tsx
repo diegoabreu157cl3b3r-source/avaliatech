@@ -80,11 +80,11 @@ export default function QuestoesPage() {
   return (
     <div className="space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} />}
-      <section className="flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">Banco de questões</p>
-          <h1 className="mt-1 text-2xl font-black text-slate-900">Questões</h1>
-          <p className="mt-2 text-sm text-slate-500">Cadastre, filtre, edite e exclua apenas as suas questões.</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-400">Banco de questões</p>
+          <h1 className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">Questões</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cadastre, filtre, edite e exclua apenas as suas questões.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button type="button" variant="ghost" onClick={() => setAiModalOpen(true)} className="gap-2"><Bot className="h-4 w-4" /> Gerar questões com IA</Button>

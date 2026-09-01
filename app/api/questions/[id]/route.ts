@@ -7,6 +7,8 @@ import { isQuestionImageUrl, removeQuestionImage } from "@/lib/question-image";
 import { fail, handleApiError, ok, validationFail } from "@/lib/response";
 import type { Questao } from "@/types/question";
 
+export const dynamic = "force-dynamic";
+
 interface RouteContext { params: Promise<{ id: string }>; }
 
 async function getId(context: RouteContext) {

@@ -14,6 +14,8 @@ function createSubjectParams(subjects: string[]) {
   return Object.fromEntries(subjects.map((subject, index) => [`assunto${index}`, subject]));
 }
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const user = await requireAuth();
@@ -81,23 +83,49 @@ export async function POST(request: Request) {
 
     const selectedQuestions = selectRandomQuestions(compatibleQuestions, data.quantidadeQuestoes);
     const { versionA, versionB } = buildExamVersions(selectedQuestions);
+    const dadosJson = JSON.stringify({ header: data, versionA, versionB });
 
-    await db.execute<ResultSetHeader>(
-      `INSERT INTO provas
-       (usuario_id, escola, professor, disciplina, assunto, dificuldade, quantidade_questoes, versao, data_prova, valor_avaliacao, data_geracao)
-       VALUES (:usuarioId, :escola, :professor, :disciplina, :assunto, :dificuldade, :quantidade, 'A/B', :dataProva, :valorAvaliacao, NOW())`,
-      {
-        usuarioId: user.id,
-        escola: data.escola,
-        professor: data.professor,
-        disciplina: data.disciplina,
-        assunto: data.assuntos.join(", "),
-        dificuldade: data.dificuldade,
-        quantidade: data.quantidadeQuestoes,
-        dataProva: data.dataProva,
-        valorAvaliacao: data.valorAvaliacao
+    try {
+      await db.execute<ResultSetHeader>(
+        `INSERT INTO provas
+         (usuario_id, escola, professor, disciplina, assunto, dificuldade, quantidade_questoes, versao, data_prova, valor_avaliacao, dados_json, data_geracao)
+         VALUES (:usuarioId, :escola, :professor, :disciplina, :assunto, :dificuldade, :quantidade, 'A/B', :dataProva, :valorAvaliacao, :dadosJson, NOW())`,
+        {
+          usuarioId: user.id,
+          escola: data.escola,
+          professor: data.professor,
+          disciplina: data.disciplina,
+          assunto: data.assuntos.join(", "),
+          dificuldade: data.dificuldade,
+          quantidade: data.quantidadeQuestoes,
+          dataProva: data.dataProva,
+          valorAvaliacao: data.valorAvaliacao,
+          dadosJson
+        }
+      );
+    } catch (insertError: unknown) {
+      const isUnknownColumn = insertError && typeof insertError === "object" && (insertError as { code?: string }).code === "ER_BAD_FIELD_ERROR";
+      if (isUnknownColumn) {
+        await db.execute<ResultSetHeader>(
+          `INSERT INTO provas
+           (usuario_id, escola, professor, disciplina, assunto, dificuldade, quantidade_questoes, versao, data_prova, valor_avaliacao, data_geracao)
+           VALUES (:usuarioId, :escola, :professor, :disciplina, :assunto, :dificuldade, :quantidade, 'A/B', :dataProva, :valorAvaliacao, NOW())`,
+          {
+            usuarioId: user.id,
+            escola: data.escola,
+            professor: data.professor,
+            disciplina: data.disciplina,
+            assunto: data.assuntos.join(", "),
+            dificuldade: data.dificuldade,
+            quantidade: data.quantidadeQuestoes,
+            dataProva: data.dataProva,
+            valorAvaliacao: data.valorAvaliacao
+          }
+        );
+      } else {
+        throw insertError;
       }
-    );
+    }
 
     const pdfBytes = await createExamPdf(data, versionA, versionB);
     const filename = `avaliatech-${data.disciplina.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.pdf`;

@@ -1,6 +1,8 @@
 import { AUTH_COOKIE_NAME } from "@/lib/constants";
 import { ok } from "@/lib/response";
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   const response = ok(null, "Logout realizado com sucesso.");
   response.cookies.set(AUTH_COOKIE_NAME, "", {

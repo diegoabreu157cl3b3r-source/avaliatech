@@ -34,15 +34,15 @@ function LoginContent() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4 transition dark:bg-slate-950">
       {toast && <Toast message={toast.message} type={toast.type} />}
-      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-soft transition dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-block rounded-2xl bg-slate-950 px-4 py-3 text-lg font-black text-white">
+          <Link href="/" className="inline-block rounded-2xl bg-slate-950 px-4 py-3 text-lg font-black text-white dark:border dark:border-slate-700 dark:bg-slate-800">
             AvaliaTech
           </Link>
-          <h1 className="mt-5 text-2xl font-black text-slate-900">Entrar na plataforma</h1>
-          <p className="mt-2 text-sm text-slate-500">Acesse seu banco de questões e gere provas.</p>
+          <h1 className="mt-5 text-2xl font-black text-slate-900 dark:text-slate-100">Entrar na plataforma</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Acesse seu banco de questões e gere provas.</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -67,8 +67,8 @@ function LoginContent() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Ainda não tem conta? <Link className="font-bold text-brand-700" href="/cadastro">Cadastre-se</Link>
+        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          Ainda não tem conta? <Link className="font-bold text-brand-700 dark:text-brand-400" href="/cadastro">Cadastre-se</Link>
         </p>
       </section>
     </main>

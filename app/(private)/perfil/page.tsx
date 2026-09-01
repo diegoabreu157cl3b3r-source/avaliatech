@@ -84,10 +84,10 @@ export default function PerfilPage() {
   return (
     <div className="space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} />}
-      <section className="rounded-3xl bg-white p-5 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">Minha conta</p>
-        <h1 className="mt-1 text-2xl font-black text-slate-900">Perfil do professor</h1>
-        <p className="mt-2 text-sm text-slate-500">Atualize seus dados, altere sua senha e salve uma logo padrão da escola.</p>
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition dark:border-slate-800 dark:bg-slate-900">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-400">Minha conta</p>
+        <h1 className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">Perfil do professor</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Atualize seus dados, altere sua senha e salve uma logo padrão da escola.</p>
       </section>
 
       <form className="card space-y-5" onSubmit={handleSubmit}>
@@ -96,9 +96,9 @@ export default function PerfilPage() {
           <Input label="E-mail" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
         </div>
 
-        <div className="rounded-3xl bg-slate-50 p-4">
-          <h2 className="font-black text-slate-900">Alterar senha</h2>
-          <p className="mt-1 text-sm text-slate-500">Deixe em branco caso não deseje trocar a senha.</p>
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition dark:border-slate-800 dark:bg-slate-800/40">
+          <h2 className="font-black text-slate-900 dark:text-slate-100">Alterar senha</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Deixe em branco caso não deseje trocar a senha.</p>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Input label="Senha atual" type="password" value={form.senhaAtual} onChange={(event) => setForm({ ...form, senhaAtual: event.target.value })} />
             <Input label="Nova senha" type="password" value={form.novaSenha} onChange={(event) => setForm({ ...form, novaSenha: event.target.value })} />
@@ -106,16 +106,16 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-dashed border-slate-300 p-4">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-slate-50 p-5 text-center transition hover:bg-slate-100">
+        <div className="rounded-3xl border border-dashed border-slate-300 p-4 transition dark:border-slate-700">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-slate-50 p-5 text-center transition hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800/80">
             {logoPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoPreview} alt="Logo padrão" className="max-h-24 rounded-xl object-contain" />
             ) : (
-              <ImagePlus className="h-10 w-10 text-slate-400" />
+              <ImagePlus className="h-10 w-10 text-slate-400 dark:text-slate-500" />
             )}
-            <span className="text-sm font-bold text-slate-700">Logo padrão da escola</span>
-            <span className="text-xs text-slate-500">Será usada automaticamente na página Gerar Prova.</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Logo padrão da escola</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Será usada automaticamente na página Gerar Prova.</span>
             <input className="sr-only" type="file" accept="image/png,image/jpeg" onChange={(event) => handleLogoChange(event.target.files?.[0])} />
           </label>
         </div>

@@ -1,15 +1,29 @@
+import { GoogleGenAI, Type } from "@google/genai";
 import type { AIQuestion, GenerateQuestionsRequest } from "@/types/question";
 
-interface OllamaResponse {
-  response?: string;
-  message?: { content?: string };
+export class GeminiServiceError extends Error {
+  statusCode: number;
+  apiCode?: string;
+  model: string;
+
+  constructor(message: string, statusCode: number, model: string, apiCode?: string) {
+    super(message);
+    this.name = "GeminiServiceError";
+    this.statusCode = statusCode;
+    this.model = model;
+    this.apiCode = apiCode;
+  }
 }
 
-function createPrompt({ disciplina, assunto, dificuldade, quantidade }: GenerateQuestionsRequest) {
+function createPrompt({ disciplina, assunto, dificuldade, quantidade, descricao }: GenerateQuestionsRequest) {
+  const additionalInstructions = descricao?.trim()
+    ? `\n\nInstruções adicionais do professor:\n"${descricao.trim()}"\nUse as instruções adicionais para orientar o estilo, contexto e elaboração das questões, mantendo estritamente os parâmetros obrigatórios.`
+    : "";
+
   return `Gere exatamente ${quantidade} questões objetivas, diferentes entre si, para um banco de questões escolar.
 Disciplina: ${disciplina}
 Assunto: ${assunto}
-Dificuldade: ${dificuldade}
+Dificuldade: ${dificuldade}${additionalInstructions}
 
 Responda SOMENTE com JSON válido, sem Markdown, sem comentários e sem campos extras, exatamente neste formato:
 {"questions":[{"pergunta":"...","alternativa_a":"...","alternativa_b":"...","alternativa_c":"...","alternativa_d":"...","correta":"A","disciplina":"${disciplina}","assunto":"${assunto}","dificuldade":"${dificuldade}"}]}
@@ -17,32 +31,165 @@ Responda SOMENTE com JSON válido, sem Markdown, sem comentários e sem campos e
 Cada questão deve ter quatro alternativas distintas, apenas uma correta e a letra de correta deve ser A, B, C ou D.`;
 }
 
-export async function requestQuestionsFromOllama(input: GenerateQuestionsRequest) {
-  const baseUrl = process.env.OLLAMA_BASE_URL?.replace(/\/$/, "");
-  const model = process.env.OLLAMA_MODEL;
-  if (!baseUrl || !model) throw new Error("AI_NOT_CONFIGURED");
+const questionResponseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    questions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          pergunta: { type: Type.STRING },
+          alternativa_a: { type: Type.STRING },
+          alternativa_b: { type: Type.STRING },
+          alternativa_c: { type: Type.STRING },
+          alternativa_d: { type: Type.STRING },
+          correta: { type: Type.STRING, enum: ["A", "B", "C", "D"] },
+          disciplina: { type: Type.STRING },
+          assunto: { type: Type.STRING },
+          dificuldade: { type: Type.STRING }
+        },
+        required: ["pergunta", "alternativa_a", "alternativa_b", "alternativa_c", "alternativa_d", "correta", "disciplina", "assunto", "dificuldade"]
+      }
+    }
+  },
+  required: ["questions"]
+} as const;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+function parseAndClassifyGeminiError(error: unknown, model: string): GeminiServiceError {
+  if (error instanceof GeminiServiceError) {
+    return error;
+  }
+
+  let rawStatus = 500;
+  let rawCode = "UNKNOWN";
+  let rawMessage = "Erro inesperado ao comunicar com o serviço de IA.";
+
+  if (error && typeof error === "object") {
+    const errObj = error as Record<string, unknown>;
+    if (typeof errObj.status === "number") {
+      rawStatus = errObj.status;
+    }
+
+    if (typeof errObj.message === "string") {
+      rawMessage = errObj.message;
+      try {
+        const json = JSON.parse(errObj.message);
+        if (json?.error) {
+          if (typeof json.error.code === "number") rawStatus = json.error.code;
+          rawCode = json.error.status || String(json.error.code);
+          rawMessage = json.error.message || errObj.message;
+        }
+      } catch {
+        // Not JSON formatted message
+      }
+    }
+  }
+
+  // Safe logging without exposing API keys or secrets
+  console.error(`[Gemini AI Error] Model: ${model} | HTTP Status: ${rawStatus} | Code: ${rawCode} | Message: ${rawMessage}`);
+
+  // Timeout / network abortion
+  if (/timeout|aborted|ETIMEDOUT|ECONNRESET/i.test(rawMessage)) {
+    return new GeminiServiceError(
+      "Tempo limite esgotado ao aguardar resposta da IA. Tente novamente.",
+      504,
+      model,
+      "TIMEOUT"
+    );
+  }
+
+  // 401 / 403 or Invalid API key
+  if (
+    rawStatus === 401 ||
+    rawStatus === 403 ||
+    /API key not valid|API_KEY_INVALID|PERMISSION_DENIED|UNAUTHENTICATED/i.test(rawMessage)
+  ) {
+    return new GeminiServiceError(
+      "Chave de API da Gemini inválida ou sem permissão de acesso.",
+      401,
+      model,
+      rawCode || "INVALID_API_KEY"
+    );
+  }
+
+  // 429 - Quota or rate limit exceeded
+  if (rawStatus === 429 || /RESOURCE_EXHAUSTED|quota|rate limit/i.test(rawMessage)) {
+    return new GeminiServiceError(
+      "Limite de requisições ou cota da Gemini excedido. Tente novamente em instantes.",
+      429,
+      model,
+      rawCode || "RATE_LIMIT_EXCEEDED"
+    );
+  }
+
+  // 404 - Model not found / discontinued
+  if (rawStatus === 404 || /NOT_FOUND|no longer available|is not found/i.test(rawMessage)) {
+    return new GeminiServiceError(
+      `O modelo de IA configurado (${model}) não está disponível ou foi descontinuado pelo Google.`,
+      400,
+      model,
+      rawCode || "MODEL_NOT_FOUND"
+    );
+  }
+
+  // 400 - Invalid request / argument
+  if (rawStatus === 400 || /INVALID_ARGUMENT/i.test(rawMessage)) {
+    return new GeminiServiceError(
+      "Requisição inválida para o serviço de IA.",
+      400,
+      model,
+      rawCode || "INVALID_ARGUMENT"
+    );
+  }
+
+  // 502 / 503 / 500 - Service unavailable / high demand
+  if (rawStatus === 503 || rawStatus === 502 || /UNAVAILABLE|high demand/i.test(rawMessage)) {
+    return new GeminiServiceError(
+      "O serviço da Gemini está temporariamente indisponível ou com alta demanda. Tente novamente mais tarde.",
+      503,
+      model,
+      rawCode || "SERVICE_UNAVAILABLE"
+    );
+  }
+
+  return new GeminiServiceError(
+    "Falha ao comunicar com o provedor de IA.",
+    502,
+    model,
+    rawCode
+  );
+}
+
+export async function requestQuestionsFromGemini(input: GenerateQuestionsRequest): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash-lite";
+
+  if (!apiKey || apiKey === "sua_chave_aqui") {
+    throw new GeminiServiceError(
+      "GEMINI_API_KEY não configurada no servidor.",
+      503,
+      model,
+      "AI_NOT_CONFIGURED"
+    );
+  }
+
   try {
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, prompt: createPrompt(input), stream: false, format: "json" }),
-      signal: controller.signal
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 60_000 } });
+    const response = await ai.models.generateContent({
+      model,
+      contents: createPrompt(input),
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: questionResponseSchema
+      }
     });
 
-    if (!response.ok) throw new Error(response.status === 404 ? "AI_MODEL_NOT_FOUND" : "AI_UNAVAILABLE");
-    const payload = await response.json() as OllamaResponse;
-    const content = payload.response ?? payload.message?.content;
-    if (!content) throw new Error("AI_INVALID_RESPONSE");
-    return content;
+    if (!response.text) throw new Error("AI_INVALID_RESPONSE");
+    return response.text;
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw new Error("AI_TIMEOUT");
-    if (error instanceof Error && error.message.startsWith("AI_")) throw error;
-    throw new Error("AI_UNAVAILABLE");
-  } finally {
-    clearTimeout(timeout);
+    if (error instanceof Error && error.message === "AI_INVALID_RESPONSE") throw error;
+    throw parseAndClassifyGeminiError(error, model);
   }
 }
 

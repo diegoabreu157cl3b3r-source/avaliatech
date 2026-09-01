@@ -44,18 +44,47 @@ export function QuestionForm({ initialData, onSubmit, onCancel }: QuestionFormPr
     try { await onSubmit(form); if (!initialData) setForm(emptyForm); } finally { setIsLoading(false); }
   }
 
-  return <form className="space-y-4" onSubmit={handleSubmit}>
-    <Textarea label="Pergunta" value={form.pergunta} onChange={(event) => update("pergunta", event.target.value)} required />
-    <div className="rounded-2xl border border-dashed border-slate-300 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div><p className="text-sm font-bold text-slate-800">Imagem da questão (opcional)</p><p className="mt-1 text-xs text-slate-500">PNG, JPG, JPEG ou WebP, até 5 MB.</p></div>
-        <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"><ImagePlus className="h-4 w-4" />{isUploading ? "Enviando..." : "Selecionar imagem"}<input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={handleImageChange} disabled={isUploading} /></label>
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <Textarea label="Pergunta" value={form.pergunta} onChange={(event) => update("pergunta", event.target.value)} required />
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-4 transition dark:border-slate-700 dark:bg-slate-800/40">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Imagem da questão (opcional)</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">PNG, JPG, JPEG ou WebP, até 5 MB.</p>
+          </div>
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            <ImagePlus className="h-4 w-4" />
+            {isUploading ? "Enviando..." : "Selecionar imagem"}
+            <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={handleImageChange} disabled={isUploading} />
+          </label>
+        </div>
+        {uploadError && <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">{uploadError}</p>}
+        {form.imagem && (
+          <div className="relative mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <img src={form.imagem} alt="Prévia da imagem da questão" className="max-h-72 w-full object-contain" />
+            <Button type="button" variant="danger" className="absolute right-3 top-3 h-9 w-9 p-0" onClick={() => update("imagem", null)} aria-label="Remover imagem">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
-      {uploadError && <p className="mt-2 text-xs font-semibold text-red-600">{uploadError}</p>}
-      {form.imagem && <div className="relative mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2"><img src={form.imagem} alt="Prévia da imagem da questão" className="max-h-72 w-full object-contain" /><Button type="button" variant="danger" className="absolute right-3 top-3 h-9 w-9 p-0" onClick={() => update("imagem", null)} aria-label="Remover imagem"><X className="h-4 w-4" /></Button></div>}
-    </div>
-    <div className="grid gap-4 sm:grid-cols-2"><Input label="Alternativa A" value={form.alternativa_a} onChange={(event) => update("alternativa_a", event.target.value)} required /><Input label="Alternativa B" value={form.alternativa_b} onChange={(event) => update("alternativa_b", event.target.value)} required /><Input label="Alternativa C" value={form.alternativa_c} onChange={(event) => update("alternativa_c", event.target.value)} required /><Input label="Alternativa D" value={form.alternativa_d} onChange={(event) => update("alternativa_d", event.target.value)} required /></div>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Select label="Correta" value={form.correta} onChange={(event) => update("correta", event.target.value as QuestaoFormData["correta"])} options={CORRETAS.map((item) => ({ label: item, value: item }))} /><Input label="Disciplina" value={form.disciplina} onChange={(event) => update("disciplina", event.target.value)} required /><Input label="Assunto" value={form.assunto} onChange={(event) => update("assunto", event.target.value)} required /><Select label="Dificuldade" value={form.dificuldade} onChange={(event) => update("dificuldade", event.target.value as QuestaoFormData["dificuldade"])} options={DIFICULDADES.map((item) => ({ label: item, value: item }))} /></div>
-    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">{onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>}<Button type="submit" isLoading={isLoading || isUploading} disabled={isUploading}>{initialData ? "Salvar alterações" : "Cadastrar questão"}</Button></div>
-  </form>;
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input label="Alternativa A" value={form.alternativa_a} onChange={(event) => update("alternativa_a", event.target.value)} required />
+        <Input label="Alternativa B" value={form.alternativa_b} onChange={(event) => update("alternativa_b", event.target.value)} required />
+        <Input label="Alternativa C" value={form.alternativa_c} onChange={(event) => update("alternativa_c", event.target.value)} required />
+        <Input label="Alternativa D" value={form.alternativa_d} onChange={(event) => update("alternativa_d", event.target.value)} required />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Select label="Correta" value={form.correta} onChange={(event) => update("correta", event.target.value as QuestaoFormData["correta"])} options={CORRETAS.map((item) => ({ label: item, value: item }))} />
+        <Input label="Disciplina" value={form.disciplina} onChange={(event) => update("disciplina", event.target.value)} required />
+        <Input label="Assunto" value={form.assunto} onChange={(event) => update("assunto", event.target.value)} required />
+        <Select label="Dificuldade" value={form.dificuldade} onChange={(event) => update("dificuldade", event.target.value as QuestaoFormData["dificuldade"])} options={DIFICULDADES.map((item) => ({ label: item, value: item }))} />
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>}
+        <Button type="submit" isLoading={isLoading || isUploading} disabled={isUploading}>{initialData ? "Salvar alterações" : "Cadastrar questão"}</Button>
+      </div>
+    </form>
+  );
 }

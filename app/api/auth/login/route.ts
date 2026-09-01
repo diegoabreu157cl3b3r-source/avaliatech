@@ -6,6 +6,8 @@ import { createToken } from "@/lib/token";
 import { AUTH_COOKIE_NAME } from "@/lib/constants";
 import { fail, handleApiError, ok, validationFail } from "@/lib/response";
 
+export const dynamic = "force-dynamic";
+
 interface UserWithPassword {
   id: number;
   nome: string;

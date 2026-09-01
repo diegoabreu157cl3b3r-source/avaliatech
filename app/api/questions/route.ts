@@ -8,6 +8,8 @@ import { isQuestionImageUrl } from "@/lib/question-image";
 import { fail, handleApiError, ok, validationFail } from "@/lib/response";
 import type { Questao } from "@/types/question";
 
+export const dynamic = "force-dynamic";
+
 function buildFilters(searchParams: URLSearchParams, userId: number) {
   const where = ["usuario_id = :usuarioId"];
   const params: Record<string, ExecuteValues> = { usuarioId: userId };

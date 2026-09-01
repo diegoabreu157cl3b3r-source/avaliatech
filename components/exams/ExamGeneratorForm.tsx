@@ -123,8 +123,8 @@ export function ExamGeneratorForm() {
       {toast && <Toast message={toast.message} type={toast.type} />}
       <form className="card space-y-5" onSubmit={handleSubmit}>
         <div>
-          <h2 className="text-xl font-black text-slate-900">Dados da prova</h2>
-          <p className="mt-1 text-sm text-slate-500">A seleção das questões é automática. Não existe carrinho nem escolha manual.</p>
+          <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Dados da prova</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">A seleção das questões é automática. Não existe carrinho nem escolha manual.</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -142,20 +142,38 @@ export function ExamGeneratorForm() {
           <Input label="Valor da avaliação" value={form.valorAvaliacao} onChange={(event) => update("valorAvaliacao", event.target.value)} placeholder="Ex.: 10,0" required />
         </div>
 
-        <div className="rounded-2xl border border-slate-200 p-4">
+        <div className="rounded-2xl border border-slate-200 p-4 transition dark:border-slate-800 dark:bg-slate-800/40">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="label">Assuntos</p>
-              <p className="text-xs text-slate-500">Selecione um ou mais assuntos da disciplina escolhida.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Selecione um ou mais assuntos da disciplina escolhida.</p>
             </div>
-            {form.assuntos.length > 0 && <button type="button" onClick={() => update("assuntos", [])} className="text-xs font-bold text-brand-700 hover:text-brand-900">Limpar seleção</button>}
+            {form.assuntos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => update("assuntos", [])}
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+              >
+                Limpar seleção
+              </button>
+            )}
           </div>
           {form.assuntos.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
               {form.assuntos.map((assunto) => (
-                <span key={assunto} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-800">
-                  {assunto}
-                  <button type="button" onClick={() => removeSubject(assunto)} aria-label={`Remover ${assunto}`} className="rounded-full p-0.5 hover:bg-brand-100"><X className="h-3.5 w-3.5" /></button>
+                <span
+                  key={assunto}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white shadow-sm"
+                >
+                  <span>{assunto}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSubject(assunto)}
+                    aria-label={`Remover ${assunto}`}
+                    className="rounded-full p-0.5 text-white/80 transition hover:bg-brand-700 hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </span>
               ))}
             </div>
@@ -170,7 +188,7 @@ export function ExamGeneratorForm() {
             disabled={!form.disciplina}
             placeholder={form.disciplina ? "Digite para buscar assuntos" : "Escolha uma disciplina primeiro"}
           />
-          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500"><Plus className="h-3.5 w-3.5" /> Selecione uma sugestão para adicionar o assunto.</p>
+          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"><Plus className="h-3.5 w-3.5" /> Selecione uma sugestão para adicionar o assunto.</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -188,16 +206,16 @@ export function ExamGeneratorForm() {
           />
         </div>
 
-        <div className="rounded-3xl border border-dashed border-slate-300 p-4">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-slate-50 p-5 text-center transition hover:bg-slate-100">
+        <div className="rounded-3xl border border-dashed border-slate-300 p-4 transition dark:border-slate-700">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-slate-50 p-5 text-center transition hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800/80">
             {logoPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoPreview} alt="Prévia da logo" className="max-h-24 rounded-xl object-contain" />
             ) : (
-              <ImagePlus className="h-10 w-10 text-slate-400" />
+              <ImagePlus className="h-10 w-10 text-slate-400 dark:text-slate-500" />
             )}
-            <span className="text-sm font-bold text-slate-700">Enviar logo da escola</span>
-            <span className="text-xs text-slate-500">PNG, JPG ou JPEG até 2 MB</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enviar logo da escola</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">PNG, JPG ou JPEG até 2 MB</span>
             <input className="sr-only" type="file" accept="image/png,image/jpeg" onChange={(event) => handleLogoChange(event.target.files?.[0])} />
           </label>
         </div>

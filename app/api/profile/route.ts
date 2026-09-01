@@ -7,6 +7,8 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { fail, handleApiError, ok, validationFail } from "@/lib/response";
 import { isValidLogo } from "@/lib/upload";
 
+export const dynamic = "force-dynamic";
+
 interface ProfileRow {
   id: number;
   nome: string;

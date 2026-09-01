@@ -47,6 +47,7 @@ export interface GenerateQuestionsRequest {
   assunto: string;
   dificuldade: Dificuldade;
   quantidade: 1 | 5 | 10 | 15 | 20;
+  descricao?: string | null;
 }
 
 export interface GenerateQuestionsResponse {

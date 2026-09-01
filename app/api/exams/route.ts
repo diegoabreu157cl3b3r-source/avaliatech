@@ -3,6 +3,8 @@ import { requireAuth } from "@/lib/auth";
 import { fail, handleApiError, ok } from "@/lib/response";
 import type { Prova } from "@/types/exam";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     const user = await requireAuth();

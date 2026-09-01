@@ -101,13 +101,19 @@ export function SuggestionInput({ label, type, value, onChange, onSelect, discip
         />
       </label>
       {showResults && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox">
-          {isLoading ? <p className="px-3 py-2 text-sm text-slate-500">Buscando sugestões...</p>
-            : items.length > 0 ? items.map((item, index) => (
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800" role="listbox">
+          {isLoading ? (
+            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Buscando sugestões...</p>
+          ) : items.length > 0 ? (
+            items.map((item, index) => (
               <button
                 key={item}
                 type="button"
-                className={`block w-full px-3 py-2 text-left text-sm ${activeIndex === index ? "bg-brand-50 text-brand-800" : "text-slate-700 hover:bg-slate-50"}`}
+                className={`block w-full px-3 py-2 text-left text-sm transition ${
+                  activeIndex === index
+                    ? "bg-brand-50 text-brand-800 dark:bg-brand-950/60 dark:text-brand-300"
+                    : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                }`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => select(item)}
                 role="option"
@@ -115,7 +121,10 @@ export function SuggestionInput({ label, type, value, onChange, onSelect, discip
               >
                 {item}
               </button>
-            )) : <p className="px-3 py-2 text-sm text-slate-500">Nenhuma sugestão encontrada.</p>}
+            ))
+          ) : (
+            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Nenhuma sugestão encontrada.</p>
+          )}
         </div>
       )}
     </div>
