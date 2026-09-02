@@ -44,10 +44,10 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
                   )}
                 </td>
                 <td className="max-w-sm px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{question.pergunta}</td>
-                <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{question.disciplina}</td>
-                <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{question.assunto}</td>
+                <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{question.disciplina}</td>
+                <td className="px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{question.assunto}</td>
                 <td className="px-4 py-4">
-                  <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     {question.dificuldade}
                   </span>
                 </td>

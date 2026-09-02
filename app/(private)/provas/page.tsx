@@ -88,15 +88,15 @@ export default function ProvasPage() {
                 {data.items.map((exam) => (
                   <tr key={exam.id} className="bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60">
                     <td className="px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{exam.escola}</td>
-                    <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{exam.disciplina}</td>
-                    <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{exam.assunto}</td>
+                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{exam.disciplina}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{exam.assunto}</td>
                     <td className="px-4 py-4">
-                      <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200">
+                      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                         {exam.dificuldade}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{exam.quantidade_questoes}</td>
-                    <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{new Date(exam.created_at).toLocaleDateString("pt-BR")}</td>
+                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{exam.quantidade_questoes}</td>
+                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{new Date(exam.created_at).toLocaleDateString("pt-BR")}</td>
                     <td className="px-4 py-4 text-right">
                       <Button
                         type="button"

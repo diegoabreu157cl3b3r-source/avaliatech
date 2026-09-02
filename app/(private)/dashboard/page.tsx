@@ -102,6 +102,9 @@ export default function DashboardPage() {
                 <span className="rounded-full bg-brand-50 px-3 py-1 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{question.disciplina}</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-700 dark:text-slate-300">{question.assunto}</span>
                 <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{question.dificuldade}</span>
+                <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200">{question.disciplina}</span>
+                <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">{question.assunto}</span>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">{question.dificuldade}</span>
               </div>
             </article>
           ))}
