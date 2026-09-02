@@ -360,46 +360,165 @@ export function ExamGeneratorForm() {
           )}
 
           {modoDificuldade === "personalizada" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <label className="label text-emerald-700 dark:text-emerald-400">Fácil</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={form.quantidadeQuestoes}
-                    value={customDistribution.facil}
-                    onChange={(e) =>
-                      setCustomDistribution((curr) => ({ ...curr, facil: Math.max(0, Number(e.target.value)) }))
-                    }
-                    className="input font-bold"
-                  />
+                {/* Fácil */}
+                <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 transition dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                      Fácil
+                    </label>
+                    <span className="text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-500">
+                      {Math.round((customDistribution.facil / (form.quantidadeQuestoes || 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          facil: Math.max(0, curr.facil - 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Diminuir fáceis"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={0}
+                      max={form.quantidadeQuestoes}
+                      value={customDistribution.facil}
+                      onChange={(e) =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          facil: Math.max(0, Number(e.target.value))
+                        }))
+                      }
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-900/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          facil: Math.min(form.quantidadeQuestoes, curr.facil + 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Aumentar fáceis"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="label text-amber-700 dark:text-amber-400">Média</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={form.quantidadeQuestoes}
-                    value={customDistribution.media}
-                    onChange={(e) =>
-                      setCustomDistribution((curr) => ({ ...curr, media: Math.max(0, Number(e.target.value)) }))
-                    }
-                    className="input font-bold"
-                  />
+
+                {/* Média */}
+                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 transition dark:border-amber-900/60 dark:bg-amber-950/20">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+                      Média
+                    </label>
+                    <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-500">
+                      {Math.round((customDistribution.media / (form.quantidadeQuestoes || 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          media: Math.max(0, curr.media - 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Diminuir médias"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={0}
+                      max={form.quantidadeQuestoes}
+                      value={customDistribution.media}
+                      onChange={(e) =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          media: Math.max(0, Number(e.target.value))
+                        }))
+                      }
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-amber-400 dark:focus:ring-amber-900/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          media: Math.min(form.quantidadeQuestoes, curr.media + 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Aumentar médias"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="label text-rose-700 dark:text-rose-400">Difícil</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={form.quantidadeQuestoes}
-                    value={customDistribution.dificil}
-                    onChange={(e) =>
-                      setCustomDistribution((curr) => ({ ...curr, dificil: Math.max(0, Number(e.target.value)) }))
-                    }
-                    className="input font-bold"
-                  />
+
+                {/* Difícil */}
+                <div className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4 transition dark:border-rose-900/60 dark:bg-rose-950/20">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">
+                      Difícil
+                    </label>
+                    <span className="text-[11px] font-semibold text-rose-700/80 dark:text-rose-500">
+                      {Math.round((customDistribution.dificil / (form.quantidadeQuestoes || 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          dificil: Math.max(0, curr.dificil - 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Diminuir difíceis"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={0}
+                      max={form.quantidadeQuestoes}
+                      value={customDistribution.dificil}
+                      onChange={(e) =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          dificil: Math.max(0, Number(e.target.value))
+                        }))
+                      }
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-rose-400 dark:focus:ring-rose-900/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDistribution((curr) => ({
+                          ...curr,
+                          dificil: Math.min(form.quantidadeQuestoes, curr.dificil + 1)
+                        }))
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      aria-label="Aumentar difíceis"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 
