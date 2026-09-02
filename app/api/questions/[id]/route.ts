@@ -1,6 +1,7 @@
 import type { ResultSetHeader } from "mysql2";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 import { questionSchema } from "@/lib/validators";
 import { cleanText } from "@/lib/sanitizers";
 import { isQuestionImageUrl, removeQuestionImage } from "@/lib/question-image";
@@ -56,6 +57,9 @@ export async function PUT(request: Request, context: RouteContext) {
       { id, usuarioId: user.id, ...data }
     );
     if (current[0].imagem && current[0].imagem !== data.imagem) await removeQuestionImage(current[0].imagem);
+
+    await logActivity(user.id, "questao_editada", `Questão editada em ${data.disciplina}`, `Assunto: ${data.assunto} · ${data.dificuldade}`);
+
     return ok({ id, ...data }, "Questão atualizada com sucesso.");
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return fail("Usuário não autenticado.", 401);
@@ -68,10 +72,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const user = await requireAuth();
     const id = await getId(context);
     if (!id) return fail("ID inválido.", 400);
-    const current = await query<Pick<Questao, "imagem">[]>("SELECT imagem FROM questoes WHERE id = :id AND usuario_id = :usuarioId LIMIT 1", { id, usuarioId: user.id });
+    const current = await query<Pick<Questao, "imagem" | "disciplina" | "assunto">[]>(
+      "SELECT imagem, disciplina, assunto FROM questoes WHERE id = :id AND usuario_id = :usuarioId LIMIT 1",
+      { id, usuarioId: user.id }
+    );
     if (!current[0]) return fail("Questão não encontrada.", 404);
     await db.execute<ResultSetHeader>("DELETE FROM questoes WHERE id = :id AND usuario_id = :usuarioId", { id, usuarioId: user.id });
-    await removeQuestionImage(current[0].imagem);
+    if (current[0].imagem) await removeQuestionImage(current[0].imagem);
+
+    await logActivity(user.id, "questao_excluida", `Questão excluída em ${current[0].disciplina}`, `Assunto: ${current[0].assunto}`);
+
     return ok(null, "Questão excluída com sucesso.");
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return fail("Usuário não autenticado.", 401);

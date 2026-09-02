@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { ExamGeneratorForm } from "@/components/exams/ExamGeneratorForm";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function GerarProvaPage() {
   return (
@@ -10,7 +12,10 @@ export default function GerarProvaPage() {
           Informe os dados, escolha os filtros e a quantidade. O AvaliaTech seleciona questões compatíveis, embaralha alternativas, cria as versões A e B e gera os gabaritos automaticamente.
         </p>
       </section>
-      <ExamGeneratorForm />
+      <Suspense fallback={<Skeleton className="h-96" />}>
+        <ExamGeneratorForm />
+      </Suspense>
     </div>
   );
 }
+

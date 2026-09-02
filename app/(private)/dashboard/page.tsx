@@ -6,6 +6,10 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getDashboardStats, type DashboardStats } from "@/services/dashboard-service";
 
+import { DifficultyChart } from "@/components/dashboard/DifficultyChart";
+import { DisciplineChart } from "@/components/dashboard/DisciplineChart";
+import { RecentActivityTimeline } from "@/components/dashboard/RecentActivityTimeline";
+
 const cards = [
   { key: "totalQuestoes", label: "Questões", icon: FileText, href: "/questoes" },
   { key: "totalDisciplinas", label: "Disciplinas", icon: BookOpen, href: "/questoes" },
@@ -30,13 +34,15 @@ export default function DashboardPage() {
     loadStats();
   }, []);
 
+  const totalQuestoes = stats?.totalQuestoes ?? 0;
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-6 text-white shadow-soft dark:border dark:border-slate-800">
         <p className="text-sm font-semibold uppercase tracking-widest text-brand-200">Painel do professor</p>
         <h1 className="mt-2 text-3xl font-black">Dashboard AvaliaTech</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-200">
-          Acompanhe seu banco de questões, cadastre novos itens e gere provas em PDF com versões A/B e gabaritos independentes.
+          Acompanhe seu banco de questões, analise estatísticas por dificuldade e disciplina, e gere provas com distribuição inteligente e versões A/B.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Link
@@ -54,6 +60,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Contadores Principais */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-32" />)
@@ -81,33 +88,118 @@ export default function DashboardPage() {
             })}
       </section>
 
-      <section className="card">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Questões recentes</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Últimos cadastros realizados.</p>
+      {/* Gráficos de Estatísticas */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        {/* Gráfico 1: Dificuldade */}
+        <div className="card">
+          <div className="mb-4">
+            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+              Questões por Dificuldade
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Distribuição de itens entre Fácil, Média e Difícil.
+            </p>
           </div>
-          <Link href="/questoes" className="text-sm font-bold text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300">Ver todas</Link>
+          {isLoading ? (
+            <Skeleton className="h-36" />
+          ) : (
+            <DifficultyChart
+              data={stats?.questoesPorDificuldade ?? []}
+              totalQuestoes={totalQuestoes}
+            />
+          )}
         </div>
 
-        <div className="space-y-3">
-          {isLoading && <Skeleton className="h-24" />}
-          {!isLoading && stats?.recentQuestions.length === 0 && (
-            <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">Nenhuma questão cadastrada ainda.</p>
+        {/* Gráfico 2: Disciplina */}
+        <div className="card">
+          <div className="mb-4">
+            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+              Questões por Disciplina
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Quantidade de itens cadastrados em cada matéria.
+            </p>
+          </div>
+          {isLoading ? (
+            <Skeleton className="h-36" />
+          ) : (
+            <DisciplineChart
+              data={stats?.questoesPorDisciplina ?? []}
+              totalQuestoes={totalQuestoes}
+            />
           )}
-          {stats?.recentQuestions.map((question) => (
-            <article key={question.id} className="rounded-2xl border border-slate-200 p-4 transition dark:border-slate-800 dark:bg-slate-800/40">
-              <p className="line-clamp-2 text-sm font-bold text-slate-900 dark:text-slate-100">{question.pergunta}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                <span className="rounded-full bg-brand-50 px-3 py-1 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{question.disciplina}</span>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-700 dark:text-slate-300">{question.assunto}</span>
-                <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{question.dificuldade}</span>
-                <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200">{question.disciplina}</span>
-                <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">{question.assunto}</span>
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">{question.dificuldade}</span>
-              </div>
-            </article>
-          ))}
+        </div>
+      </section>
+
+      {/* Atividades Recentes & Questões Recentes */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        {/* Atividade Recente */}
+        <div className="card">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                Atividade recente
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                Histórico recente de criações, edições e provas.
+              </p>
+            </div>
+          </div>
+          {isLoading ? (
+            <Skeleton className="h-48" />
+          ) : (
+            <RecentActivityTimeline activities={stats?.recentActivities ?? []} />
+          )}
+        </div>
+
+        {/* Questões Recentes */}
+        <div className="card">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                Questões recentes
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                Últimos itens cadastrados no seu banco.
+              </p>
+            </div>
+            <Link
+              href="/questoes"
+              className="text-xs font-bold text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+              Ver todas
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            {isLoading && <Skeleton className="h-48" />}
+            {!isLoading && (!stats?.recentQuestions || stats.recentQuestions.length === 0) && (
+              <p className="rounded-2xl bg-slate-50 p-4 text-center text-sm font-medium text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                Nenhuma questão cadastrada ainda.
+              </p>
+            )}
+            {stats?.recentQuestions?.map((question) => (
+              <article
+                key={question.id}
+                className="rounded-2xl border border-slate-200 p-3.5 transition dark:border-slate-800 dark:bg-slate-800/40"
+              >
+                <p className="line-clamp-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {question.pergunta}
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-0.5 text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200">
+                    {question.disciplina}
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {question.assunto}
+                  </span>
+                  <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-0.5 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                    {question.dificuldade}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </div>

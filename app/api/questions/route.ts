@@ -2,6 +2,7 @@ import type { ResultSetHeader } from "mysql2";
 import type { ExecuteValues } from "mysql2";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 import { questionSchema } from "@/lib/validators";
 import { cleanOptionalText, cleanText } from "@/lib/sanitizers";
 import { isQuestionImageUrl } from "@/lib/question-image";
@@ -115,6 +116,8 @@ export async function POST(request: Request) {
        VALUES (:usuarioId, :pergunta, :imagem, :alternativa_a, :alternativa_b, :alternativa_c, :alternativa_d, :correta, :disciplina, :assunto, :dificuldade)`,
       { usuarioId: user.id, ...data }
     );
+
+    await logActivity(user.id, "questao_criada", `Nova questão em ${data.disciplina}`, `Assunto: ${data.assunto} · ${data.dificuldade}`);
 
     return ok({ id: result.insertId, ...data }, "Questão cadastrada com sucesso.", 201);
   } catch (error) {

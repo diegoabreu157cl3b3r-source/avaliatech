@@ -1,5 +1,13 @@
 import type { AlternativaCorreta, Dificuldade, Questao } from "@/types/question";
 
+export type ModoDificuldade = "unica" | "automatica" | "personalizada";
+
+export interface DistribuicaoDificuldade {
+  facil: number;
+  media: number;
+  dificil: number;
+}
+
 export interface Prova {
   id: number;
   usuario_id: number;
@@ -7,7 +15,7 @@ export interface Prova {
   professor: string;
   disciplina: string;
   assunto: string;
-  dificuldade: Dificuldade;
+  dificuldade: string;
   quantidade_questoes: number;
   versao: string;
   data_prova: string | null;
@@ -22,7 +30,9 @@ export interface GenerateExamRequest {
   professor: string;
   disciplina: string;
   assuntos: string[];
-  dificuldade: Dificuldade;
+  dificuldade: string;
+  modoDificuldade?: ModoDificuldade;
+  distribuicao?: DistribuicaoDificuldade | null;
   quantidadeQuestoes: 10 | 15 | 20 | 25;
   dataProva: string;
   valorAvaliacao: string;
@@ -50,5 +60,24 @@ export interface ExamDataPayload {
   header: GenerateExamRequest;
   versionA: VersaoProva;
   versionB: VersaoProva;
+  distribuicao?: DistribuicaoDificuldade | null;
+}
+
+export interface ExamFilters {
+  search?: string;
+  escola?: string;
+  disciplina?: string;
+  assunto?: string;
+  dificuldade?: string;
+  periodo?: "todos" | "7d" | "30d" | "90d";
+  page?: number;
+  limit?: number;
+}
+
+export interface ExamFilterOptions {
+  escolas: string[];
+  disciplinas: string[];
+  assuntos: string[];
+  dificuldades: string[];
 }
 

@@ -48,7 +48,16 @@ export const generateExamSchema = z.object({
   professor: z.string().min(2, "Informe o professor."),
   disciplina: z.string().min(2, "Informe a disciplina."),
   assuntos: z.array(z.string().trim().min(2, "Informe um assunto.").max(120)).min(1, "Selecione pelo menos um assunto.").max(20),
-  dificuldade: z.enum(DIFICULDADES),
+  dificuldade: z.string().min(1, "Informe a dificuldade."),
+  modoDificuldade: z.enum(["unica", "automatica", "personalizada"]).optional().default("unica"),
+  distribuicao: z
+    .object({
+      facil: z.coerce.number().int().min(0, "A quantidade de questões fáceis não pode ser negativa."),
+      media: z.coerce.number().int().min(0, "A quantidade de questões médias não pode ser negativa."),
+      dificil: z.coerce.number().int().min(0, "A quantidade de questões difíceis não pode ser negativa.")
+    })
+    .optional()
+    .nullable(),
   quantidadeQuestoes: z.coerce.number().refine((value) => QUANTIDADES_PROVA.includes(value as 10 | 15 | 20 | 25), {
     message: "A quantidade deve ser 10, 15, 20 ou 25."
   }),
@@ -56,7 +65,23 @@ export const generateExamSchema = z.object({
   valorAvaliacao: z.string().min(1, "Informe o valor da avaliação."),
   logoBase64: z.string().optional().nullable(),
   logoMime: z.enum(["image/png", "image/jpeg"]).optional().nullable()
-});
+}).refine(
+  (data) => {
+    if (data.modoDificuldade === "personalizada") {
+      if (!data.distribuicao) return false;
+      const sum = data.distribuicao.facil + data.distribuicao.media + data.distribuicao.dificil;
+      return sum === data.quantidadeQuestoes;
+    }
+    return true;
+  },
+  (data) => {
+    const sum = data.distribuicao ? data.distribuicao.facil + data.distribuicao.media + data.distribuicao.dificil : 0;
+    return {
+      message: `Você selecionou ${data.quantidadeQuestoes} questões, mas a distribuição atual totaliza ${sum}.`,
+      path: ["distribuicao"]
+    };
+  }
+);
 
 export const profileSchema = z.object({
   nome: z.string().min(3, "Informe pelo menos 3 caracteres."),
