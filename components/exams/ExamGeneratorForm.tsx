@@ -288,8 +288,8 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("unica")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "unica"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               Dificuldade única
@@ -300,8 +300,8 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("automatica")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "automatica"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
@@ -313,8 +313,8 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("personalizada")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "personalizada"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               <Sliders className="h-3.5 w-3.5" />
@@ -335,22 +335,22 @@ export function ExamGeneratorForm() {
           )}
 
           {modoDificuldade === "automatica" && (
-            <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4 dark:border-brand-900/60 dark:bg-brand-950/30">
-              <p className="text-xs font-bold text-brand-900 dark:text-brand-200">
+            <div className="rounded-xl border border-brand-200 bg-brand-50/70 p-4 dark:border-brand-800/60 dark:bg-slate-900/60">
+              <p className="text-xs font-bold text-brand-900 dark:text-brand-300">
                 Distribuição calculada para {form.quantidadeQuestoes} questões:
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-lg bg-white p-2.5 shadow-xs dark:bg-slate-800">
+                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
                   <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">Fácil</span>
                   <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.facil}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
                 </div>
-                <div className="rounded-lg bg-white p-2.5 shadow-xs dark:bg-slate-800">
+                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
                   <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Média</span>
                   <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.media}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
                 </div>
-                <div className="rounded-lg bg-white p-2.5 shadow-xs dark:bg-slate-800">
+                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
                   <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400">Difícil</span>
                   <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.dificil}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
@@ -407,8 +407,8 @@ export function ExamGeneratorForm() {
               <div
                 className={`flex items-center justify-between rounded-xl border p-3 text-xs font-semibold ${
                   isCustomSumValid
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
-                    : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-200"
+                    : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-200"
                 }`}
               >
                 <span className="flex items-center gap-1.5">

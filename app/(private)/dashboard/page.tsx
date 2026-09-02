@@ -187,13 +187,21 @@ export default function DashboardPage() {
                   {question.pergunta}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-semibold">
-                  <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-0.5 text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200">
+                  <span className="rounded-full bg-brand-600 px-3 py-0.5 font-bold text-white shadow-xs">
                     {question.disciplina}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-0.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     {question.assunto}
                   </span>
-                  <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-0.5 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  <span
+                    className={`rounded-full border px-3 py-0.5 font-bold ${
+                      question.dificuldade === "Fácil"
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+                        : question.dificuldade === "Média"
+                        ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-300"
+                        : "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/70 dark:text-rose-300"
+                    }`}
+                  >
                     {question.dificuldade}
                   </span>
                 </div>

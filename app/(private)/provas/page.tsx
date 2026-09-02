@@ -244,7 +244,7 @@ export default function ProvasPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 w-8 p-0"
+                          size="icon"
                           onClick={() => handleOpenPreview(exam)}
                           aria-label="Visualizar prova"
                           title="Visualizar prova"
@@ -256,7 +256,7 @@ export default function ProvasPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 w-8 p-0"
+                          size="icon"
                           onClick={() => handleDownload(exam)}
                           isLoading={downloadingId === exam.id}
                           disabled={downloadingId !== null}
@@ -270,7 +270,7 @@ export default function ProvasPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 w-8 p-0"
+                          size="icon"
                           onClick={() => handleRegenerate(exam)}
                           isLoading={regeneratingId === exam.id}
                           disabled={regeneratingId !== null}
@@ -284,7 +284,7 @@ export default function ProvasPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 w-8 p-0"
+                          size="icon"
                           onClick={() => handleDuplicate(exam)}
                           aria-label="Duplicar prova"
                           title="Duplicar parâmetros no formulário"
@@ -296,7 +296,7 @@ export default function ProvasPage() {
                         <Button
                           type="button"
                           variant="danger"
-                          className="h-8 w-8 p-0"
+                          size="icon"
                           onClick={() => setDeletingExam(exam)}
                           aria-label="Excluir prova"
                           title="Excluir prova"

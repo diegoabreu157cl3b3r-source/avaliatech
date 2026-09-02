@@ -54,10 +54,10 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
                 <td className="px-4 py-4 font-black text-slate-900 dark:text-slate-100">{question.correta}</td>
                 <td className="px-4 py-4">
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="ghost" className="h-10 w-10 p-0" onClick={() => onEdit(question)} aria-label="Editar questão">
+                    <Button type="button" variant="ghost" size="icon" className="h-10 w-10" onClick={() => onEdit(question)} aria-label="Editar questão">
                       <Edit className="h-5 w-5" />
                     </Button>
-                    <Button type="button" variant="danger" className="h-10 w-10 p-0" onClick={() => onDelete(question)} aria-label="Excluir questão">
+                    <Button type="button" variant="danger" size="icon" className="h-10 w-10" onClick={() => onDelete(question)} aria-label="Excluir questão">
                       <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>

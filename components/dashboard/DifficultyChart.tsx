@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { DificuldadeStat } from "@/services/dashboard-service";
 
@@ -10,18 +10,18 @@ interface DifficultyChartProps {
 const difficultyConfig = {
   Fácil: {
     color: "bg-emerald-500",
-    textColor: "text-emerald-700 dark:text-emerald-400",
-    badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800"
+    textColor: "text-emerald-700 dark:text-emerald-300",
+    badgeBg: "bg-emerald-50/80 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/80"
   },
   Média: {
     color: "bg-amber-500",
-    textColor: "text-amber-700 dark:text-amber-400",
-    badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800"
+    textColor: "text-amber-700 dark:text-amber-300",
+    badgeBg: "bg-amber-50/80 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800/80"
   },
   Difícil: {
     color: "bg-rose-500",
-    textColor: "text-rose-700 dark:text-rose-400",
-    badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800"
+    textColor: "text-rose-700 dark:text-rose-300",
+    badgeBg: "bg-rose-50/80 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/80"
   }
 };
 
