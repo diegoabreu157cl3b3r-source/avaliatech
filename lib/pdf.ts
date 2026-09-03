@@ -91,6 +91,66 @@ export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: Pdf
 }
 
 function drawFooter(page: PDFPage, font: PDFFont, version: string) { page.drawText(`AvaliaTech • Versão ${version}`, { x: LAYOUT.margin, y: LAYOUT.footerY, size: 7, font, color: rgb(.4, .45, .5) }); }
+export async function drawSubsequentHeader(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  header: PdfHeaderData,
+  version: string,
+  pageIndex: number,
+  totalPages: number
+) {
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const top = PAGE.height - LAYOUT.margin;
+
+  page.drawText(`AvaliaTech — Prova Versão ${version}`, {
+    x: LAYOUT.margin,
+    y: top - 10,
+    size: 10,
+    font: bold,
+    color: rgb(0.03, 0.19, 0.34)
+  });
+
+  page.drawText(`${header.disciplina} • ${header.escola}`, {
+    x: LAYOUT.margin + 175,
+    y: top - 10,
+    size: 8.5,
+    font: regular,
+    color: rgb(0.35, 0.4, 0.45)
+  });
+
+  const pageLabel = `Página ${pageIndex} de ${totalPages}`;
+  const pageLabelWidth = regular.widthOfTextAtSize(pageLabel, 8.5);
+  page.drawText(pageLabel, {
+    x: PAGE.width - LAYOUT.margin - pageLabelWidth,
+    y: top - 10,
+    size: 8.5,
+    font: regular,
+    color: rgb(0.35, 0.4, 0.45)
+  });
+
+  page.drawLine({
+    start: { x: LAYOUT.margin, y: top - 18 },
+    end: { x: PAGE.width - LAYOUT.margin, y: top - 18 },
+    thickness: 0.6,
+    color: rgb(0.72, 0.84, 0.92)
+  });
+
+  return top - 32;
+}
+
+function drawFooter(page: PDFPage, font: PDFFont, version: string, pageIndex?: number, totalPages?: number) {
+  const text = pageIndex && totalPages
+    ? `AvaliaTech • Versão ${version} • Página ${pageIndex} de ${totalPages}`
+    : `AvaliaTech • Versão ${version}`;
+  page.drawText(text, {
+    x: LAYOUT.margin,
+    y: LAYOUT.footerY,
+    size: 7,
+    font,
+    color: rgb(0.4, 0.45, 0.5)
+  });
+}
 function formatQuestionValue(value: string, count: number) { const numeric = Number(value.replace(/[^0-9,.-]/g, "").replace(".", "").replace(",", ".")); return Number.isFinite(numeric) && numeric > 0 ? `${(numeric / count).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} pt` : "valor"; }
 
 function preferredFontSize(question: QuestaoDaProva) {
@@ -131,20 +191,57 @@ export function drawQuestion(page: PDFPage, layout: QuestionLayout, number: numb
 
 async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: PdfHeaderData) {
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica); const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold); const title = `Avaliação - Versão ${version.versao}`;
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const title = `Avaliação - Versão ${version.versao}`;
   const columnWidth = (PAGE.width - LAYOUT.margin * 2 - LAYOUT.columnGap) / LAYOUT.columnsPerPage;
   const questionsPerPage = LAYOUT.questionsPerColumn * LAYOUT.columnsPerPage;
+  const totalPagesInVersion = Math.ceil(version.questoes.length / questionsPerPage);
+
   for (let pageOffset = 0; pageOffset < version.questoes.length; pageOffset += questionsPerPage) {
     const page = pdfDoc.addPage([PAGE.width, PAGE.height]); const bodyTop = await drawHeader(pdfDoc, page, header, title);
+    const pageIndex = Math.floor(pageOffset / questionsPerPage) + 1;
+    const isFirstPage = pageOffset === 0;
+    const page = pdfDoc.addPage([PAGE.width, PAGE.height]);
+
+    let bodyTop: number;
+    if (isFirstPage) {
+      bodyTop = await drawHeader(pdfDoc, page, header, title);
+    } else {
+      bodyTop = await drawSubsequentHeader(pdfDoc, page, header, version.versao, pageIndex, totalPagesInVersion);
+    }
+
     const availableHeight = bodyTop - (LAYOUT.margin + LAYOUT.footerReserve);
     const pageQuestions = version.questoes.slice(pageOffset, pageOffset + questionsPerPage);
     const leftQuestions = pageQuestions.slice(0, LAYOUT.questionsPerColumn);
     const rightQuestions = pageQuestions.slice(LAYOUT.questionsPerColumn);
     const columns: ColumnState[] = [{ x: LAYOUT.margin, y: bodyTop, questionCount: 0 }, { x: LAYOUT.margin + columnWidth + LAYOUT.columnGap, y: bodyTop, questionCount: 0 }];
     const layoutsByColumn = await Promise.all([createColumnLayouts(pdfDoc, leftQuestions, regular, columnWidth, availableHeight), createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight)]);
+    const columns: ColumnState[] = [
+      { x: LAYOUT.margin, y: bodyTop, questionCount: 0 },
+      { x: LAYOUT.margin + columnWidth + LAYOUT.columnGap, y: bodyTop, questionCount: 0 }
+    ];
+    const layoutsByColumn = await Promise.all([
+      createColumnLayouts(pdfDoc, leftQuestions, regular, columnWidth, availableHeight),
+      createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight)
+    ]);
     for (let columnIndex = 0; columnIndex < LAYOUT.columnsPerPage; columnIndex++) {
       layoutsByColumn[columnIndex].forEach((layout, questionIndex) => drawQuestion(page, layout, pageOffset + columnIndex * LAYOUT.questionsPerColumn + questionIndex + 1, formatQuestionValue(header.valorAvaliacao, version.questoes.length), columns[columnIndex], columnWidth, bold, regular));
+      layoutsByColumn[columnIndex].forEach((layout, questionIndex) =>
+        drawQuestion(
+          page,
+          layout,
+          pageOffset + columnIndex * LAYOUT.questionsPerColumn + questionIndex + 1,
+          formatQuestionValue(header.valorAvaliacao, version.questoes.length),
+          columns[columnIndex],
+          columnWidth,
+          bold,
+          regular
+        )
+      );
     }
     drawFooter(page, regular, version.versao);
+    drawFooter(page, regular, version.versao, pageIndex, totalPagesInVersion);
   }
 }
 
