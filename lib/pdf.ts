@@ -79,18 +79,123 @@ export function formatExamDate(dateStr: string | null | undefined): string {
   return trimmed;
 }
 
-export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: PdfHeaderData, title: string) {
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica); const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold); const top = PAGE.height - LAYOUT.margin;
-  page.drawRectangle({ x: LAYOUT.margin, y: top - 92, width: PAGE.width - LAYOUT.margin * 2, height: 92, color: rgb(.94, .98, 1), borderColor: rgb(.72, .84, .92), borderWidth: .8 });
-  const logo = parseDataUrl(header.logoBase64);
-  if (logo) { try { const image = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes); const scale = Math.min(58 / image.width, 58 / image.height); page.drawImage(image, { x: LAYOUT.margin + 12, y: top - 72, width: image.width * scale, height: image.height * scale }); } catch { page.drawText("LOGO", { x: LAYOUT.margin + 25, y: top - 43, size: 8, font: bold }); } } else page.drawText("LOGO", { x: LAYOUT.margin + 25, y: top - 43, size: 8, font: bold });
-  page.drawText(title, { x: LAYOUT.margin + 82, y: top - 22, size: 13, font: bold, color: rgb(.03, .19, .34) });
-  page.drawText(`Escola: ${header.escola}`, { x: LAYOUT.margin + 82, y: top - 39, size: 9, font: regular }); page.drawText(`Professor(a): ${header.professor}`, { x: LAYOUT.margin + 82, y: top - 54, size: 9, font: regular }); page.drawText(`Disciplina: ${header.disciplina}`, { x: LAYOUT.margin + 82, y: top - 69, size: 9, font: regular }); page.drawText(`Data: ${formatExamDate(header.dataProva)}   Valor: ${header.valorAvaliacao}`, { x: LAYOUT.margin + 82, y: top - 84, size: 9, font: regular });
-  const fieldY = top - 112; page.drawText("Nome:", { x: LAYOUT.margin, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 34, y: fieldY - 1 }, end: { x: LAYOUT.margin + 235, y: fieldY - 1 }, thickness: .5 }); page.drawText("Escola:", { x: LAYOUT.margin + 248, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 288, y: fieldY - 1 }, end: { x: LAYOUT.margin + 430, y: fieldY - 1 }, thickness: .5 }); page.drawText("Turma:", { x: LAYOUT.margin + 443, y: fieldY, size: 8.5, font: bold }); page.drawLine({ start: { x: LAYOUT.margin + 480, y: fieldY - 1 }, end: { x: PAGE.width - LAYOUT.margin, y: fieldY - 1 }, thickness: .5 });
-  return fieldY - 20;
+function drawLabelValue(
+  page: PDFPage,
+  boldFont: PDFFont,
+  regularFont: PDFFont,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  size = 8.5,
+  color = TEXT_COLOR
+) {
+  page.drawText(label, { x, y, size, font: boldFont, color: rgb(0.08, 0.15, 0.25) });
+  const labelWidth = boldFont.widthOfTextAtSize(label, size);
+  page.drawText(` ${value}`, { x: x + labelWidth, y, size, font: regularFont, color });
 }
 
-function drawFooter(page: PDFPage, font: PDFFont, version: string) { page.drawText(`AvaliaTech • Versão ${version}`, { x: LAYOUT.margin, y: LAYOUT.footerY, size: 7, font, color: rgb(.4, .45, .5) }); }
+export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: PdfHeaderData, title: string) {
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const top = PAGE.height - LAYOUT.margin;
+  const boxHeight = 90;
+  const boxWidth = PAGE.width - LAYOUT.margin * 2;
+  const boxY = top - boxHeight;
+
+  // Header background card
+  page.drawRectangle({
+    x: LAYOUT.margin,
+    y: boxY,
+    width: boxWidth,
+    height: boxHeight,
+    color: rgb(0.95, 0.98, 1),
+    borderColor: rgb(0.72, 0.84, 0.92),
+    borderWidth: 0.8
+  });
+
+  // Logo handling & vertical centering
+  const logoMaxW = 64;
+  const logoMaxH = 64;
+  const logoAreaW = 76;
+  const logo = parseDataUrl(header.logoBase64);
+
+  if (logo) {
+    try {
+      const image = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes);
+      const scale = Math.min(logoMaxW / image.width, logoMaxH / image.height, 1);
+      const w = image.width * scale;
+      const h = image.height * scale;
+      const imgX = LAYOUT.margin + (logoAreaW - w) / 2 + 2;
+      const imgY = boxY + (boxHeight - h) / 2;
+      page.drawImage(image, { x: imgX, y: imgY, width: w, height: h });
+    } catch {
+      page.drawText("LOGO", { x: LAYOUT.margin + 26, y: boxY + boxHeight / 2 - 4, size: 9, font: bold, color: rgb(0.4, 0.5, 0.6) });
+    }
+  } else {
+    page.drawText("LOGO", { x: LAYOUT.margin + 26, y: boxY + boxHeight / 2 - 4, size: 9, font: bold, color: rgb(0.4, 0.5, 0.6) });
+  }
+
+  // Vertical separator between logo and info
+  page.drawLine({
+    start: { x: LAYOUT.margin + logoAreaW + 6, y: top - 10 },
+    end: { x: LAYOUT.margin + logoAreaW + 6, y: boxY + 10 },
+    thickness: 0.5,
+    color: rgb(0.78, 0.86, 0.92)
+  });
+
+  const textStartX = LAYOUT.margin + logoAreaW + 18;
+  const col2X = LAYOUT.margin + 295;
+
+  // Title
+  page.drawText(title, {
+    x: textStartX,
+    y: top - 20,
+    size: 12.5,
+    font: bold,
+    color: rgb(0.03, 0.19, 0.34)
+  });
+
+  // Line 1: Escola (spans across)
+  drawLabelValue(page, bold, regular, "Escola:", header.escola, textStartX, top - 37);
+
+  // Line 2: Professor(a) (Col 1) | Disciplina (Col 2)
+  drawLabelValue(page, bold, regular, "Professor(a):", header.professor, textStartX, top - 53);
+  drawLabelValue(page, bold, regular, "Disciplina:", header.disciplina, col2X, top - 53);
+
+  // Line 3: Data (Col 1) | Valor (Col 2)
+  drawLabelValue(page, bold, regular, "Data:", formatExamDate(header.dataProva), textStartX, top - 69);
+  drawLabelValue(page, bold, regular, "Valor:", header.valorAvaliacao, col2X, top - 69);
+
+  // Student Fill-in Fields below the box
+  const fieldY = boxY - 18;
+  page.drawText("Nome:", { x: LAYOUT.margin, y: fieldY, size: 8.5, font: bold, color: TEXT_COLOR });
+  page.drawLine({
+    start: { x: LAYOUT.margin + 34, y: fieldY - 1 },
+    end: { x: LAYOUT.margin + 240, y: fieldY - 1 },
+    thickness: 0.5,
+    color: rgb(0.4, 0.45, 0.5)
+  });
+
+  page.drawText("Escola:", { x: LAYOUT.margin + 252, y: fieldY, size: 8.5, font: bold, color: TEXT_COLOR });
+  page.drawLine({
+    start: { x: LAYOUT.margin + 292, y: fieldY - 1 },
+    end: { x: LAYOUT.margin + 420, y: fieldY - 1 },
+    thickness: 0.5,
+    color: rgb(0.4, 0.45, 0.5)
+  });
+
+  page.drawText("Turma:", { x: LAYOUT.margin + 432, y: fieldY, size: 8.5, font: bold, color: TEXT_COLOR });
+  page.drawLine({
+    start: { x: LAYOUT.margin + 468, y: fieldY - 1 },
+    end: { x: PAGE.width - LAYOUT.margin, y: fieldY - 1 },
+    thickness: 0.5,
+    color: rgb(0.4, 0.45, 0.5)
+  });
+
+  return fieldY - 18;
+}
+
 export async function drawSubsequentHeader(
   pdfDoc: PDFDocument,
   page: PDFPage,
@@ -190,7 +295,6 @@ export function drawQuestion(page: PDFPage, layout: QuestionLayout, number: numb
 }
 
 async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: PdfHeaderData) {
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica); const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold); const title = `Avaliação - Versão ${version.versao}`;
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const title = `Avaliação - Versão ${version.versao}`;
@@ -199,7 +303,6 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
   const totalPagesInVersion = Math.ceil(version.questoes.length / questionsPerPage);
 
   for (let pageOffset = 0; pageOffset < version.questoes.length; pageOffset += questionsPerPage) {
-    const page = pdfDoc.addPage([PAGE.width, PAGE.height]); const bodyTop = await drawHeader(pdfDoc, page, header, title);
     const pageIndex = Math.floor(pageOffset / questionsPerPage) + 1;
     const isFirstPage = pageOffset === 0;
     const page = pdfDoc.addPage([PAGE.width, PAGE.height]);
@@ -215,8 +318,6 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
     const pageQuestions = version.questoes.slice(pageOffset, pageOffset + questionsPerPage);
     const leftQuestions = pageQuestions.slice(0, LAYOUT.questionsPerColumn);
     const rightQuestions = pageQuestions.slice(LAYOUT.questionsPerColumn);
-    const columns: ColumnState[] = [{ x: LAYOUT.margin, y: bodyTop, questionCount: 0 }, { x: LAYOUT.margin + columnWidth + LAYOUT.columnGap, y: bodyTop, questionCount: 0 }];
-    const layoutsByColumn = await Promise.all([createColumnLayouts(pdfDoc, leftQuestions, regular, columnWidth, availableHeight), createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight)]);
     const columns: ColumnState[] = [
       { x: LAYOUT.margin, y: bodyTop, questionCount: 0 },
       { x: LAYOUT.margin + columnWidth + LAYOUT.columnGap, y: bodyTop, questionCount: 0 }
@@ -226,7 +327,6 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
       createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight)
     ]);
     for (let columnIndex = 0; columnIndex < LAYOUT.columnsPerPage; columnIndex++) {
-      layoutsByColumn[columnIndex].forEach((layout, questionIndex) => drawQuestion(page, layout, pageOffset + columnIndex * LAYOUT.questionsPerColumn + questionIndex + 1, formatQuestionValue(header.valorAvaliacao, version.questoes.length), columns[columnIndex], columnWidth, bold, regular));
       layoutsByColumn[columnIndex].forEach((layout, questionIndex) =>
         drawQuestion(
           page,
@@ -240,7 +340,6 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
         )
       );
     }
-    drawFooter(page, regular, version.versao);
     drawFooter(page, regular, version.versao, pageIndex, totalPagesInVersion);
   }
 }
