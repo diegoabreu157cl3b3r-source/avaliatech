@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CORRETAS, DIFICULDADES, QUANTIDADES_PROVA } from "@/lib/constants";
+import { CORRETAS, DIFICULDADES, DIFICULDADES_IA, QUANTIDADES_PROVA } from "@/lib/constants";
 
 export const cadastroSchema = z
   .object({
@@ -34,7 +34,7 @@ export const questionSchema = z.object({
 export const generateQuestionsSchema = z.object({
   disciplina: z.string().trim().min(2, "Informe a disciplina.").max(120),
   assunto: z.string().trim().min(2, "Informe o assunto.").max(120),
-  dificuldade: z.enum(DIFICULDADES),
+  dificuldade: z.enum(DIFICULDADES_IA),
   quantidade: z.coerce.number().pipe(
     z.union([z.literal(1), z.literal(5), z.literal(10), z.literal(15), z.literal(20)], {
       errorMap: () => ({ message: "A quantidade deve ser 1, 5, 10, 15 ou 20." })

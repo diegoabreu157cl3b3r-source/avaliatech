@@ -20,15 +20,20 @@ function createPrompt({ disciplina, assunto, dificuldade, quantidade, descricao 
     ? `\n\nInstruções adicionais do professor:\n"${descricao.trim()}"\nUse as instruções adicionais para orientar o estilo, contexto e elaboração das questões, mantendo estritamente os parâmetros obrigatórios.`
     : "";
 
+  const instrucaoDificuldade =
+    dificuldade === "Mista"
+      ? `Dificuldade: Mista (distribua as ${quantidade} questões de forma equilibrada e variada entre os níveis "Fácil", "Média" e "Difícil". No campo "dificuldade" de cada questão individual no JSON, classifique obrigatoriamente como "Fácil", "Média" ou "Difícil").`
+      : `Dificuldade: ${dificuldade} (todas as questões devem ter o campo "dificuldade" exatamente como "${dificuldade}").`;
+
   return `Gere exatamente ${quantidade} questões objetivas, diferentes entre si, para um banco de questões escolar.
 Disciplina: ${disciplina}
 Assunto: ${assunto}
-Dificuldade: ${dificuldade}${additionalInstructions}
+${instrucaoDificuldade}${additionalInstructions}
 
 Responda SOMENTE com JSON válido, sem Markdown, sem comentários e sem campos extras, exatamente neste formato:
-{"questions":[{"pergunta":"...","alternativa_a":"...","alternativa_b":"...","alternativa_c":"...","alternativa_d":"...","correta":"A","disciplina":"${disciplina}","assunto":"${assunto}","dificuldade":"${dificuldade}"}]}
+{"questions":[{"pergunta":"...","alternativa_a":"...","alternativa_b":"...","alternativa_c":"...","alternativa_d":"...","correta":"A","disciplina":"${disciplina}","assunto":"${assunto}","dificuldade":"${dificuldade === "Mista" ? "Fácil" : dificuldade}"}]}
 
-Cada questão deve ter quatro alternativas distintas, apenas uma correta e a letra de correta deve ser A, B, C ou D.`;
+Cada questão deve ter quatro alternativas distintas, apenas uma correta e a letra de correta deve ser A, B, C ou D. O campo "dificuldade" de cada questão individual no array JSON deve ser obrigatoriamente "Fácil", "Média" ou "Difícil".`;
 }
 
 const questionResponseSchema = {
@@ -47,7 +52,7 @@ const questionResponseSchema = {
           correta: { type: Type.STRING, enum: ["A", "B", "C", "D"] },
           disciplina: { type: Type.STRING },
           assunto: { type: Type.STRING },
-          dificuldade: { type: Type.STRING }
+          dificuldade: { type: Type.STRING, enum: ["Fácil", "Média", "Difícil"] }
         },
         required: ["pergunta", "alternativa_a", "alternativa_b", "alternativa_c", "alternativa_d", "correta", "disciplina", "assunto", "dificuldade"]
       }
@@ -210,7 +215,19 @@ export function parseAndValidateAIQuestions(raw: string, input: GenerateQuestion
     if (Object.keys(candidate).length !== keys.length || !keys.every((key) => key in candidate)) throw new Error("AI_INVALID_RESPONSE");
     if (!keys.filter((key) => key !== "correta").every((key) => typeof candidate[key] === "string" && candidate[key].trim().length > 0)) throw new Error("AI_INVALID_RESPONSE");
     if (candidate.correta !== "A" && candidate.correta !== "B" && candidate.correta !== "C" && candidate.correta !== "D") throw new Error("AI_INVALID_RESPONSE");
-    if (candidate.disciplina !== input.disciplina || candidate.assunto !== input.assunto || candidate.dificuldade !== input.dificuldade) throw new Error("AI_INVALID_RESPONSE");
+    if (candidate.disciplina !== input.disciplina || candidate.assunto !== input.assunto) {
+      throw new Error("AI_INVALID_RESPONSE");
+    }
+
+    if (input.dificuldade === "Mista") {
+      if (candidate.dificuldade !== "Fácil" && candidate.dificuldade !== "Média" && candidate.dificuldade !== "Difícil") {
+        throw new Error("AI_INVALID_RESPONSE");
+      }
+    } else {
+      if (candidate.dificuldade !== input.dificuldade) {
+        throw new Error("AI_INVALID_RESPONSE");
+      }
+    }
 
     const alternatives = [candidate.alternativa_a, candidate.alternativa_b, candidate.alternativa_c, candidate.alternativa_d]
       .map((value) => (value as string).trim().toLocaleLowerCase("pt-BR"));
@@ -227,7 +244,7 @@ export function parseAndValidateAIQuestions(raw: string, input: GenerateQuestion
       correta: candidate.correta,
       disciplina: input.disciplina,
       assunto: input.assunto,
-      dificuldade: input.dificuldade
+      dificuldade: candidate.dificuldade as "Fácil" | "Média" | "Difícil"
     } as AIQuestion;
   });
 }

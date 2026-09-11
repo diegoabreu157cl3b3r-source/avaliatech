@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import { DIFICULDADES, QUANTIDADES_GERACAO_IA } from "@/lib/constants";
+import { DIFICULDADES_IA, QUANTIDADES_GERACAO_IA } from "@/lib/constants";
 import { createQuestion, generateQuestionsWithAI } from "@/services/question-service";
 import type { AIQuestion, GenerateQuestionsRequest } from "@/types/question";
 
@@ -109,7 +109,7 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
               ))}
             </ol>
             <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              Resposta correta: <strong className="text-slate-800 dark:text-slate-200">{question.correta}</strong> · {question.disciplina} · {question.assunto} · {question.dificuldade}
+              Resposta correta: <strong className="text-slate-800 dark:text-slate-200">{question.correta}</strong> · {question.disciplina} · {question.assunto} · <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold bg-slate-100 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200">{question.dificuldade}</span>
             </p>
             {!saved.has(index) && (
               <div className="mt-4 flex flex-wrap gap-2">
@@ -130,7 +130,7 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
       <Input label="Disciplina" value={form.disciplina} onChange={(event) => setForm((current) => ({ ...current, disciplina: event.target.value }))} required />
       <Input label="Assunto" value={form.assunto} onChange={(event) => setForm((current) => ({ ...current, assunto: event.target.value }))} required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Select label="Dificuldade" value={form.dificuldade} onChange={(event) => setForm((current) => ({ ...current, dificuldade: event.target.value as GenerateQuestionsRequest["dificuldade"] }))} options={DIFICULDADES.map((item) => ({ label: item, value: item }))} />
+        <Select label="Dificuldade" value={form.dificuldade} onChange={(event) => setForm((current) => ({ ...current, dificuldade: event.target.value as GenerateQuestionsRequest["dificuldade"] }))} options={DIFICULDADES_IA.map((item) => ({ label: item, value: item }))} />
         <Select label="Quantidade" value={String(form.quantidade)} onChange={(event) => setForm((current) => ({ ...current, quantidade: Number(event.target.value) as GenerateQuestionsRequest["quantidade"] }))} options={QUANTIDADES_GERACAO_IA.map((item) => ({ label: String(item), value: String(item) }))} />
       </div>
       <Textarea

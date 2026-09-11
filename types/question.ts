@@ -1,4 +1,5 @@
 export type Dificuldade = "Fácil" | "Média" | "Difícil";
+export type DificuldadeIA = Dificuldade | "Mista";
 export type AlternativaCorreta = "A" | "B" | "C" | "D";
 
 export interface Questao {
@@ -45,7 +46,7 @@ export interface AIQuestion extends Omit<QuestaoFormData, "imagem"> {}
 export interface GenerateQuestionsRequest {
   disciplina: string;
   assunto: string;
-  dificuldade: Dificuldade;
+  dificuldade: DificuldadeIA;
   quantidade: 1 | 5 | 10 | 15 | 20;
   descricao?: string | null;
 }
