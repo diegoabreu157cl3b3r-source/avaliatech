@@ -11,15 +11,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-200 dark:bg-brand-600 dark:hover:bg-brand-500 dark:focus:ring-brand-900/50",
-  secondary: "bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-200 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white dark:focus:ring-slate-700",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-200 dark:bg-red-600 dark:hover:bg-red-500 dark:focus:ring-red-900/50",
-  ghost: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:text-white dark:focus:ring-slate-800"
+  primary: "bg-gold-500 text-navy-950 font-black hover:bg-gold-400 focus:ring-gold-500/30 shadow-sm active:scale-[0.98]",
+  secondary: "bg-navy-850 text-slate-100 border border-navy-700 hover:bg-navy-800 hover:border-navy-600 focus:ring-gold-500/20 active:scale-[0.98]",
+  danger: "bg-rose-600/90 text-white border border-rose-500/30 hover:bg-rose-500 focus:ring-rose-500/30 active:scale-[0.98]",
+  ghost: "bg-transparent text-slate-400 border border-transparent hover:bg-navy-850 hover:text-slate-100 hover:border-navy-700 focus:ring-gold-500/20 active:scale-[0.98]"
 };
 
 const sizes: Record<Size, string> = {
   sm: "px-3 py-1.5 text-xs rounded-xl",
-  md: "px-4 py-2.5 text-sm rounded-2xl",
+  md: "px-4 py-2.5 text-sm rounded-xl",
   lg: "px-5 py-3 text-base rounded-2xl",
   icon: "h-9 w-9 p-0 rounded-xl shrink-0"
 };

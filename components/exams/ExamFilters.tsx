@@ -33,12 +33,12 @@ export function ExamFilters({ filters, onChange, onReset }: ExamFiltersProps) {
               placeholder="Buscar por escola, professor, disciplina ou assunto..."
               className="field pl-10 pr-10"
             />
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 mt-1 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 mt-1 h-4 w-4 -translate-y-1/2 text-slate-400" />
             {filters.search && (
               <button
                 type="button"
                 onClick={() => onChange({ search: "", page: 1 })}
-                className="absolute right-3.5 top-1/2 mt-1 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                className="absolute right-3.5 top-1/2 mt-1 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-navy-850 hover:text-slate-100"
                 aria-label="Limpar busca"
               >
                 <X className="h-4 w-4" />
@@ -77,8 +77,8 @@ export function ExamFilters({ filters, onChange, onReset }: ExamFiltersProps) {
       </div>
 
       {hasActiveFilters && (
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-          <span className="flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400">
+        <div className="flex items-center justify-between border-t border-navy-700 pt-3">
+          <span className="flex items-center gap-1.5 text-xs font-bold text-gold-400">
             <Filter className="h-3.5 w-3.5" /> Filtros ativos
           </span>
           <Button

@@ -179,10 +179,10 @@ export default function ProvasPage() {
     <div className="space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition dark:border-slate-800 dark:bg-slate-900">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-400">Histórico</p>
-        <h1 className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">Provas geradas</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <section className="rounded-3xl border border-navy-700 bg-navy-900 p-5 sm:p-6 shadow-soft transition text-slate-100">
+        <p className="text-xs font-bold uppercase tracking-wider text-gold-400">Histórico</p>
+        <h1 className="mt-1 text-2xl font-black text-slate-100">Provas geradas</h1>
+        <p className="mt-1.5 text-sm text-slate-400">
           Gerencie, visualize, baixe, regere e duplique suas provas geradas anteriormente.
         </p>
       </section>
@@ -212,30 +212,40 @@ export default function ProvasPage() {
           {/* Tabela para Desktop */}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
-              <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <thead className="border-b border-navy-700 bg-navy-850 text-xs font-bold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="px-4 py-3">Escola</th>
-                  <th className="px-4 py-3">Disciplina</th>
-                  <th className="px-4 py-3">Assunto</th>
-                  <th className="px-4 py-3">Dificuldade</th>
-                  <th className="px-4 py-3">Questões</th>
-                  <th className="px-4 py-3">Data</th>
-                  <th className="px-4 py-3 text-right">Ações</th>
+                  <th className="px-4 py-3.5">Escola</th>
+                  <th className="px-4 py-3.5">Disciplina</th>
+                  <th className="px-4 py-3.5">Assunto</th>
+                  <th className="px-4 py-3.5">Dificuldade</th>
+                  <th className="px-4 py-3.5">Questões</th>
+                  <th className="px-4 py-3.5">Data</th>
+                  <th className="px-4 py-3.5 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-navy-700">
                 {data.items.map((exam) => (
-                  <tr key={exam.id} className="bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60">
-                    <td className="px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{exam.escola}</td>
-                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{exam.disciplina}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-900 dark:text-slate-100">{exam.assunto}</td>
+                  <tr key={exam.id} className="bg-navy-900 transition hover:bg-navy-850">
+                    <td className="px-4 py-4 font-semibold text-slate-100">{exam.escola}</td>
+                    <td className="px-4 py-4 font-medium text-slate-300">{exam.disciplina}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-100">{exam.assunto}</td>
                     <td className="px-4 py-4">
-                      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <span
+                        className={`rounded-full border px-3 py-0.5 text-xs font-bold ${
+                          exam.dificuldade === "Fácil"
+                            ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-400"
+                            : exam.dificuldade === "Média"
+                            ? "border-amber-500/40 bg-amber-950/40 text-amber-400"
+                            : exam.dificuldade === "Difícil"
+                            ? "border-rose-500/40 bg-rose-950/40 text-rose-400"
+                            : "border-gold-500/40 bg-gold-950/40 text-gold-400"
+                        }`}
+                      >
                         {exam.dificuldade}
                       </span>
                     </td>
-                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{exam.quantidade_questoes}</td>
-                    <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">
+                    <td className="px-4 py-4 font-medium text-slate-300">{exam.quantidade_questoes}</td>
+                    <td className="px-4 py-4 font-medium text-slate-300">
                       {new Date(exam.created_at).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-4 py-4 text-right">
@@ -312,9 +322,9 @@ export default function ProvasPage() {
           </div>
 
           {/* Paginação Real */}
-          <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Página {currentPage} de {totalPages} • Total: <strong>{data.total}</strong> prova(s)
+          <div className="flex flex-col gap-3 border-t border-navy-700 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-400">
+              Página {currentPage} de {totalPages} • Total: <strong className="text-slate-200">{data.total}</strong> prova(s)
             </p>
             <div className="flex items-center gap-1.5">
               <Button
@@ -334,8 +344,8 @@ export default function ProvasPage() {
                   onClick={() => handleFilterChange({ page: num })}
                   className={`h-9 w-9 rounded-xl text-xs font-bold transition ${
                     num === currentPage
-                      ? "bg-brand-600 text-white shadow-xs"
-                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                      ? "bg-gold-500 text-navy-950 font-black shadow-xs"
+                      : "text-slate-400 hover:bg-navy-850 hover:text-slate-100"
                   }`}
                 >
                   {num}

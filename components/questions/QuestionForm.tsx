@@ -45,25 +45,25 @@ export function QuestionForm({ initialData, onSubmit, onCancel }: QuestionFormPr
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <Textarea label="Pergunta" value={form.pergunta} onChange={(event) => update("pergunta", event.target.value)} required />
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-4 transition dark:border-slate-700 dark:bg-slate-800/40">
+      <div className="rounded-2xl border border-dashed border-navy-700 bg-navy-950/60 p-4 transition">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Imagem da questão (opcional)</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">PNG, JPG, JPEG ou WebP, até 5 MB.</p>
+            <p className="text-sm font-bold text-slate-200">Imagem da questão (opcional)</p>
+            <p className="mt-1 text-xs text-slate-400">PNG, JPG, JPEG ou WebP, até 5 MB.</p>
           </div>
-          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-            <ImagePlus className="h-4 w-4" />
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-navy-700 bg-navy-850 px-3.5 py-2 text-xs font-bold text-slate-200 transition hover:bg-navy-800 hover:border-gold-500/30">
+            <ImagePlus className="h-4 w-4 text-gold-400" />
             {isUploading ? "Enviando..." : "Selecionar imagem"}
             <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={handleImageChange} disabled={isUploading} />
           </label>
         </div>
-        {uploadError && <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">{uploadError}</p>}
+        {uploadError && <p className="mt-2 text-xs font-semibold text-rose-400">{uploadError}</p>}
         {form.imagem && (
-          <div className="relative mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+          <div className="relative mt-4 overflow-hidden rounded-xl border border-navy-700 bg-navy-900 p-2">
             <img src={form.imagem} alt="Prévia da imagem da questão" className="max-h-72 w-full object-contain" />
-            <Button type="button" variant="danger" className="absolute right-3 top-3 h-9 w-9 p-0" onClick={() => update("imagem", null)} aria-label="Remover imagem">
+            <Button type="button" variant="danger" size="icon" className="absolute right-3 top-3" onClick={() => update("imagem", null)} aria-label="Remover imagem">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -81,7 +81,7 @@ export function QuestionForm({ initialData, onSubmit, onCancel }: QuestionFormPr
         <Input label="Assunto" value={form.assunto} onChange={(event) => update("assunto", event.target.value)} required />
         <Select label="Dificuldade" value={form.dificuldade} onChange={(event) => update("dificuldade", event.target.value as QuestaoFormData["dificuldade"])} options={DIFICULDADES.map((item) => ({ label: item, value: item }))} />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end pt-2">
         {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>}
         <Button type="submit" isLoading={isLoading || isUploading} disabled={isUploading}>{initialData ? "Salvar alterações" : "Cadastrar questão"}</Button>
       </div>

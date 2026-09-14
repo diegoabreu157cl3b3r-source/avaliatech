@@ -192,8 +192,8 @@ export function ExamGeneratorForm() {
       {toast && <Toast message={toast.message} type={toast.type} />}
       <form className="card space-y-6" onSubmit={handleSubmit}>
         <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Dados da prova</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h2 className="text-xl font-black text-slate-100">Dados da prova</h2>
+          <p className="mt-1 text-sm text-slate-400">
             A seleção das questões é automática. Escolha as configurações e gere o PDF com versões A e B.
           </p>
         </div>
@@ -220,17 +220,17 @@ export function ExamGeneratorForm() {
         </div>
 
         {/* Seleção de Assuntos */}
-        <div className="rounded-2xl border border-slate-200 p-4 transition dark:border-slate-800 dark:bg-slate-800/40">
+        <div className="rounded-2xl border border-navy-700 bg-navy-850/40 p-4.5 transition">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="label">Assuntos</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Selecione um ou mais assuntos da disciplina escolhida.</p>
+              <p className="text-xs text-slate-400">Selecione um ou mais assuntos da disciplina escolhida.</p>
             </div>
             {form.assuntos.length > 0 && (
               <button
                 type="button"
                 onClick={() => update("assuntos", [])}
-                className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                className="text-xs font-bold text-gold-400 hover:text-gold-300 hover:underline"
               >
                 Limpar seleção
               </button>
@@ -241,14 +241,14 @@ export function ExamGeneratorForm() {
               {form.assuntos.map((assunto) => (
                 <span
                   key={assunto}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gold-500 px-3 py-1 text-xs font-black text-navy-950 shadow-sm"
                 >
                   <span>{assunto}</span>
                   <button
                     type="button"
                     onClick={() => removeSubject(assunto)}
                     aria-label={`Remover ${assunto}`}
-                    className="rounded-full p-0.5 text-white/80 transition hover:bg-brand-700 hover:text-white"
+                    className="rounded-full p-0.5 text-navy-950/80 transition hover:bg-gold-600 hover:text-navy-950"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -266,17 +266,17 @@ export function ExamGeneratorForm() {
             disabled={!form.disciplina}
             placeholder={form.disciplina ? "Digite para buscar assuntos" : "Escolha uma disciplina primeiro"}
           />
-          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"><Plus className="h-3.5 w-3.5" /> Selecione uma sugestão para adicionar o assunto.</p>
+          <p className="mt-2 flex items-center gap-1 text-xs text-slate-400"><Plus className="h-3.5 w-3.5 text-gold-400" /> Selecione uma sugestão para adicionar o assunto.</p>
         </div>
 
         {/* Gerador Inteligente de Dificuldade */}
-        <div className="rounded-2xl border border-slate-200 p-4.5 transition dark:border-slate-800 dark:bg-slate-800/40">
+        <div className="rounded-2xl border border-navy-700 bg-navy-850/40 p-4.5 transition">
           <div className="mb-3">
-            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+            <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-gold-400" />
               Distribuição de Dificuldade
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-400">
               Escolha uma dificuldade única ou utilize distribuição inteligente balanceada / personalizada.
             </p>
           </div>
@@ -288,8 +288,8 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("unica")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "unica"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
               }`}
             >
               Dificuldade única
@@ -300,11 +300,11 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("automatica")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "automatica"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
+              <Sparkles className="h-3.5 w-3.5 text-gold-400" />
               Balanceamento automático
             </button>
 
@@ -313,8 +313,8 @@ export function ExamGeneratorForm() {
               onClick={() => setModoDificuldade("personalizada")}
               className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
                 modoDificuldade === "personalizada"
-                  ? "border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-950/80 dark:text-brand-200 ring-2 ring-brand-500/20"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
               }`}
             >
               <Sliders className="h-3.5 w-3.5" />
@@ -335,24 +335,24 @@ export function ExamGeneratorForm() {
           )}
 
           {modoDificuldade === "automatica" && (
-            <div className="rounded-xl border border-brand-200 bg-brand-50/70 p-4 dark:border-brand-800/60 dark:bg-slate-900/60">
-              <p className="text-xs font-bold text-brand-900 dark:text-brand-300">
+            <div className="rounded-xl border border-navy-700 bg-navy-900/80 p-4">
+              <p className="text-xs font-bold text-gold-400">
                 Distribuição calculada para {form.quantidadeQuestoes} questões:
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
-                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">Fácil</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.facil}</strong>
+                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
+                  <span className="text-[11px] font-bold text-emerald-400">Fácil</span>
+                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.facil}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
                 </div>
-                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
-                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Média</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.media}</strong>
+                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
+                  <span className="text-[11px] font-bold text-amber-400">Média</span>
+                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.media}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
                 </div>
-                <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
-                  <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400">Difícil</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-900 dark:text-slate-100">{autoDist.dificil}</strong>
+                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
+                  <span className="text-[11px] font-bold text-rose-400">Difícil</span>
+                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.dificil}</strong>
                   <span className="text-[10px] text-slate-400">questões</span>
                 </div>
               </div>
@@ -363,12 +363,12 @@ export function ExamGeneratorForm() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {/* Fácil */}
-                <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 transition dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                <div className="rounded-2xl border border-emerald-500/30 bg-navy-900/80 p-4 transition">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                       Fácil
                     </label>
-                    <span className="text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-500">
+                    <span className="text-[11px] font-semibold text-emerald-400">
                       {Math.round((customDistribution.facil / (form.quantidadeQuestoes || 1)) * 100)}%
                     </span>
                   </div>
@@ -381,7 +381,7 @@ export function ExamGeneratorForm() {
                           facil: Math.max(0, curr.facil - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Diminuir fáceis"
                     >
                       -
@@ -397,7 +397,7 @@ export function ExamGeneratorForm() {
                           facil: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-900/40"
+                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
                     />
                     <button
                       type="button"
@@ -407,7 +407,7 @@ export function ExamGeneratorForm() {
                           facil: Math.min(form.quantidadeQuestoes, curr.facil + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Aumentar fáceis"
                     >
                       +
@@ -416,12 +416,12 @@ export function ExamGeneratorForm() {
                 </div>
 
                 {/* Média */}
-                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 transition dark:border-amber-900/60 dark:bg-amber-950/20">
+                <div className="rounded-2xl border border-amber-500/30 bg-navy-900/80 p-4 transition">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-amber-400">
                       Média
                     </label>
-                    <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-500">
+                    <span className="text-[11px] font-semibold text-amber-400">
                       {Math.round((customDistribution.media / (form.quantidadeQuestoes || 1)) * 100)}%
                     </span>
                   </div>
@@ -434,7 +434,7 @@ export function ExamGeneratorForm() {
                           media: Math.max(0, curr.media - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Diminuir médias"
                     >
                       -
@@ -450,7 +450,7 @@ export function ExamGeneratorForm() {
                           media: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-amber-400 dark:focus:ring-amber-900/40"
+                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
                     />
                     <button
                       type="button"
@@ -460,7 +460,7 @@ export function ExamGeneratorForm() {
                           media: Math.min(form.quantidadeQuestoes, curr.media + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Aumentar médias"
                     >
                       +
@@ -469,12 +469,12 @@ export function ExamGeneratorForm() {
                 </div>
 
                 {/* Difícil */}
-                <div className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4 transition dark:border-rose-900/60 dark:bg-rose-950/20">
+                <div className="rounded-2xl border border-rose-500/30 bg-navy-900/80 p-4 transition">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-rose-400">
                       Difícil
                     </label>
-                    <span className="text-[11px] font-semibold text-rose-700/80 dark:text-rose-500">
+                    <span className="text-[11px] font-semibold text-rose-400">
                       {Math.round((customDistribution.dificil / (form.quantidadeQuestoes || 1)) * 100)}%
                     </span>
                   </div>
@@ -487,7 +487,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.max(0, curr.dificil - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Diminuir difíceis"
                     >
                       -
@@ -503,7 +503,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white text-center text-lg font-black text-slate-900 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-rose-400 dark:focus:ring-rose-900/40"
+                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
                     />
                     <button
                       type="button"
@@ -513,7 +513,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.min(form.quantidadeQuestoes, curr.dificil + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-black text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
                       aria-label="Aumentar difíceis"
                     >
                       +
@@ -526,15 +526,15 @@ export function ExamGeneratorForm() {
               <div
                 className={`flex items-center justify-between rounded-xl border p-3 text-xs font-semibold ${
                   isCustomSumValid
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-200"
-                    : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-200"
+                    ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-300"
+                    : "border-amber-500/40 bg-amber-950/40 text-amber-300"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
                   {isCustomSumValid ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <AlertCircle className="h-4 w-4 text-amber-400" />
                   )}
                   {isCustomSumValid
                     ? "Soma correta das dificuldades."
@@ -549,16 +549,16 @@ export function ExamGeneratorForm() {
         </div>
 
         {/* Upload de Logo */}
-        <div className="rounded-3xl border border-dashed border-slate-300 p-4 transition dark:border-slate-700">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-slate-50 p-5 text-center transition hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800/80">
+        <div className="rounded-3xl border border-dashed border-navy-700 p-4 transition">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-navy-950/60 p-5 text-center transition hover:bg-navy-850/60">
             {logoPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoPreview} alt="Prévia da logo" className="max-h-24 rounded-xl object-contain" />
             ) : (
-              <ImagePlus className="h-10 w-10 text-slate-400 dark:text-slate-500" />
+              <ImagePlus className="h-10 w-10 text-slate-400" />
             )}
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enviar logo da escola</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">PNG, JPG ou JPEG até 2 MB</span>
+            <span className="text-sm font-bold text-slate-200">Enviar logo da escola</span>
+            <span className="text-xs text-slate-400">PNG, JPG ou JPEG até 2 MB</span>
             <input className="sr-only" type="file" accept="image/png,image/jpeg" onChange={(event) => handleLogoChange(event.target.files?.[0])} />
           </label>
         </div>

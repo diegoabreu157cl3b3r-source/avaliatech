@@ -19,7 +19,7 @@ export function Select({ label, error, options, placeholder, className = "", ...
           </option>
         ))}
       </select>
-      {error && <span className="mt-1 block text-xs font-semibold text-red-600">{error}</span>}
+      {error && <span className="mt-1 block text-xs font-semibold text-rose-400">{error}</span>}
     </label>
   );
 }

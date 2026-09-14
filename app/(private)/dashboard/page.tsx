@@ -38,22 +38,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-6 text-white shadow-soft dark:border dark:border-slate-800">
-        <p className="text-sm font-semibold uppercase tracking-widest text-brand-200">Painel do professor</p>
-        <h1 className="mt-2 text-3xl font-black">Dashboard AvaliaTech</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-200">
+      <section className="rounded-3xl border border-navy-700 bg-gradient-to-br from-navy-900 via-navy-850 to-navy-950 p-6 sm:p-8 text-slate-100 shadow-2xl">
+        <p className="text-xs font-bold uppercase tracking-widest text-gold-400">Painel do professor</p>
+        <h1 className="mt-2 text-2xl font-black sm:text-3xl text-slate-100">Dashboard AvaliaTech</h1>
+        <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-300">
           Acompanhe seu banco de questões, analise estatísticas por dificuldade e disciplina, e gere provas com distribuição inteligente e versões A/B.
         </p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/questoes"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-md transition hover:bg-brand-50 active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold-500 px-5 py-3 text-sm font-black text-navy-950 shadow-md transition hover:bg-gold-400 active:scale-95"
           >
-            <PlusCircle className="h-4 w-4 text-brand-600" /> Nova questão
+            <PlusCircle className="h-4 w-4" /> Nova questão
           </Link>
           <Link
             href="/gerar-prova"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/30 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-navy-600 bg-navy-850 px-5 py-3 text-sm font-bold text-slate-100 transition hover:bg-navy-800 hover:border-navy-500"
           >
             Gerar prova
           </Link>
@@ -72,14 +72,14 @@ export default function DashboardPage() {
                   key={card.key}
                   href={card.href}
                   aria-label={`Ver ${card.label.toLowerCase()}`}
-                  className="card block cursor-pointer transition duration-200 hover:-translate-y-1 hover:border-brand-300 dark:hover:border-brand-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                  className="card block cursor-pointer transition duration-200 hover:-translate-y-1 hover:border-gold-500/50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{card.label}</p>
-                      <strong className="mt-2 block text-3xl font-black text-slate-900 dark:text-slate-50">{value}</strong>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{card.label}</p>
+                      <strong className="mt-2 block text-3xl font-black text-slate-100">{value}</strong>
                     </div>
-                    <span className="rounded-2xl bg-brand-50 p-3 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                    <span className="rounded-2xl border border-navy-700 bg-navy-850 p-3 text-gold-400 shadow-inner">
                       <Icon className="h-6 w-6" />
                     </span>
                   </div>
@@ -93,10 +93,10 @@ export default function DashboardPage() {
         {/* Gráfico 1: Dificuldade */}
         <div className="card">
           <div className="mb-4">
-            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-black text-slate-100">
               Questões por Dificuldade
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-400">
               Distribuição de itens entre Fácil, Média e Difícil.
             </p>
           </div>
@@ -113,10 +113,10 @@ export default function DashboardPage() {
         {/* Gráfico 2: Disciplina */}
         <div className="card">
           <div className="mb-4">
-            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-black text-slate-100">
               Questões por Disciplina
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-400">
               Quantidade de itens cadastrados em cada matéria.
             </p>
           </div>
@@ -137,10 +137,10 @@ export default function DashboardPage() {
         <div className="card">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-black text-slate-100">
                 Atividade recente
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-0.5 text-xs text-slate-400">
                 Histórico recente de criações, edições e provas.
               </p>
             </div>
@@ -156,16 +156,16 @@ export default function DashboardPage() {
         <div className="card">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-black text-slate-100">
                 Questões recentes
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-0.5 text-xs text-slate-400">
                 Últimos itens cadastrados no seu banco.
               </p>
             </div>
             <Link
               href="/questoes"
-              className="text-xs font-bold text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
+              className="text-xs font-bold text-gold-400 hover:text-gold-300 hover:underline"
             >
               Ver todas
             </Link>
@@ -174,32 +174,32 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {isLoading && <Skeleton className="h-48" />}
             {!isLoading && (!stats?.recentQuestions || stats.recentQuestions.length === 0) && (
-              <p className="rounded-2xl bg-slate-50 p-4 text-center text-sm font-medium text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+              <p className="rounded-2xl border border-navy-700 bg-navy-850/40 p-4 text-center text-sm font-medium text-slate-400">
                 Nenhuma questão cadastrada ainda.
               </p>
             )}
             {stats?.recentQuestions?.map((question) => (
               <article
                 key={question.id}
-                className="rounded-2xl border border-slate-200 p-3.5 transition dark:border-slate-800 dark:bg-slate-800/40"
+                className="rounded-2xl border border-navy-700 bg-navy-850/40 p-3.5 transition hover:border-navy-600 hover:bg-navy-850"
               >
-                <p className="line-clamp-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+                <p className="line-clamp-2 text-sm font-bold text-slate-100">
                   {question.pergunta}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-semibold">
-                  <span className="rounded-full bg-brand-600 px-3 py-0.5 font-bold text-white shadow-xs">
+                  <span className="rounded-full bg-navy-700 px-3 py-0.5 font-bold text-gold-400 border border-gold-500/20">
                     {question.disciplina}
                   </span>
-                  <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-0.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <span className="rounded-full border border-navy-700 bg-navy-900 px-3 py-0.5 text-slate-300">
                     {question.assunto}
                   </span>
                   <span
                     className={`rounded-full border px-3 py-0.5 font-bold ${
                       question.dificuldade === "Fácil"
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+                        ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-400"
                         : question.dificuldade === "Média"
-                        ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-300"
-                        : "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/70 dark:text-rose-300"
+                        ? "border-amber-500/40 bg-amber-950/40 text-amber-400"
+                        : "border-rose-500/40 bg-rose-950/40 text-rose-400"
                     }`}
                   >
                     {question.dificuldade}

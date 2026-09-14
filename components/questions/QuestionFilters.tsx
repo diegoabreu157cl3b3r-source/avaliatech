@@ -17,8 +17,8 @@ export function QuestionFilters({ filters, onChange, onClear }: QuestionFiltersP
   return (
     <div className="card">
       <div className="mb-4 flex items-center gap-2">
-        <Search className="h-5 w-5 text-brand-700" />
-        <h2 className="font-black text-slate-900">Filtros</h2>
+        <Search className="h-5 w-5 text-gold-400" />
+        <h2 className="font-black text-slate-100">Filtros</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Input label="Pesquisa" value={filters.search ?? ""} onChange={(event) => onChange({ ...filters, page: 1, search: event.target.value })} placeholder="Pergunta, disciplina ou assunto" />
@@ -26,7 +26,7 @@ export function QuestionFilters({ filters, onChange, onClear }: QuestionFiltersP
         <Input label="Assunto" value={filters.assunto ?? ""} onChange={(event) => onChange({ ...filters, page: 1, assunto: event.target.value })} />
         <Select
           label="Dificuldade"
-          placeholder="Todas"
+          placeholder="Todas as dificuldades"
           value={filters.dificuldade ?? ""}
           onChange={(event) => onChange({ ...filters, page: 1, dificuldade: event.target.value })}
           options={DIFICULDADES.map((item) => ({ label: item, value: item }))}

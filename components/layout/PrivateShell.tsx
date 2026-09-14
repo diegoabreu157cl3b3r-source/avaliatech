@@ -12,7 +12,7 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-slate-50 p-4 transition dark:bg-slate-950">
+      <main className="min-h-screen bg-navy-950 p-4 transition">
         <Skeleton className="h-16 w-full" />
         <div className="mt-4 grid gap-4 md:grid-cols-4">
           <Skeleton className="h-40 md:col-span-1" />
@@ -23,7 +23,7 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 transition lg:pl-72 dark:bg-slate-950">
+    <div className="min-h-screen bg-navy-950 text-slate-100 transition lg:pl-72">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="min-w-0 flex-1">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
