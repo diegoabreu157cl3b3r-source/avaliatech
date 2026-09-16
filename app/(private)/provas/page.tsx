@@ -11,6 +11,7 @@ import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { ExamFilters } from "@/components/exams/ExamFilters";
 import { ExamPreviewModal } from "@/components/exams/ExamPreviewModal";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import {
   deleteExam,
   downloadHistoricalExamPdf,
@@ -179,13 +180,12 @@ export default function ProvasPage() {
     <div className="space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <section className="rounded-3xl border border-navy-700 bg-navy-900 p-5 sm:p-6 shadow-soft transition text-slate-100">
-        <p className="text-xs font-bold uppercase tracking-wider text-gold-400">Histórico</p>
-        <h1 className="mt-1 text-2xl font-black text-slate-100">Provas geradas</h1>
-        <p className="mt-1.5 text-sm text-slate-400">
-          Gerencie, visualize, baixe, regere e duplique suas provas geradas anteriormente.
+      <div>
+        <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Provas geradas</h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Gerencie, visualize, baixe, regere e duplique suas avaliações anteriores.
         </p>
-      </section>
+      </div>
 
       {/* Barra de Filtros e Busca */}
       <ExamFilters
@@ -212,7 +212,7 @@ export default function ProvasPage() {
           {/* Tabela para Desktop */}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
-              <thead className="border-b border-navy-700 bg-navy-850 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-navy-700 bg-navy-850 text-xs font-semibold text-slate-400">
                 <tr>
                   <th className="px-4 py-3.5">Escola</th>
                   <th className="px-4 py-3.5">Disciplina</th>
@@ -230,19 +230,7 @@ export default function ProvasPage() {
                     <td className="px-4 py-4 font-medium text-slate-300">{exam.disciplina}</td>
                     <td className="px-4 py-4 font-semibold text-slate-100">{exam.assunto}</td>
                     <td className="px-4 py-4">
-                      <span
-                        className={`rounded-full border px-3 py-0.5 text-xs font-bold ${
-                          exam.dificuldade === "Fácil"
-                            ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-400"
-                            : exam.dificuldade === "Média"
-                            ? "border-amber-500/40 bg-amber-950/40 text-amber-400"
-                            : exam.dificuldade === "Difícil"
-                            ? "border-rose-500/40 bg-rose-950/40 text-rose-400"
-                            : "border-gold-500/40 bg-gold-950/40 text-gold-400"
-                        }`}
-                      >
-                        {exam.dificuldade}
-                      </span>
+                      <DifficultyBadge difficulty={exam.dificuldade} />
                     </td>
                     <td className="px-4 py-4 font-medium text-slate-300">{exam.quantidade_questoes}</td>
                     <td className="px-4 py-4 font-medium text-slate-300">

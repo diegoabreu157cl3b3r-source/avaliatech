@@ -4,6 +4,68 @@
 
 :root {
   color-scheme: light;
+
+  /* Light Theme (Clean Academic Paper Slate with Warm Amber Accents) */
+  --navy-950-rgb: 248 250 252;   /* Slate-50: Main canvas background #F8FAFC */
+  --navy-900-rgb: 255 255 255;   /* White: Card / Sheet surfaces #FFFFFF */
+  --navy-850-rgb: 241 245 249;   /* Slate-100: Subsurfaces, table rows, inputs #F1F5F9 */
+  --navy-800-rgb: 226 232 240;   /* Slate-200: Subtle line dividers #E2E8F0 */
+  --navy-750-rgb: 226 232 240;   /* Slate-200: Card borders #E2E8F0 */
+  --navy-700-rgb: 203 213 225;   /* Slate-300: Strong borders #CBD5E1 */
+  --navy-600-rgb: 148 163 184;   /* Slate-400: Active borders #94A3B8 */
+
+  --slate-50-rgb: 15 23 42;      /* Slate-900 #0F172A */
+  --slate-100-rgb: 15 23 42;     /* Primary text: deep slate #0F172A */
+  --slate-200-rgb: 30 41 59;     /* Slate-800 #1E293B */
+  --slate-300-rgb: 51 65 85;     /* Slate-700 #334155 */
+  --slate-400-rgb: 100 116 139;  /* Slate-500: readable muted text #64748B */
+  --slate-500-rgb: 100 116 139;  /* Slate-500 #64748B */
+  --slate-600-rgb: 71 85 105;    /* Slate-600 #475569 */
+  --slate-700-rgb: 226 232 240;  /* In light mode: light border/background #E2E8F0 */
+  --slate-800-rgb: 241 245 249;  /* In light mode: light surface #F1F5F9 */
+  --slate-900-rgb: 255 255 255;  /* In light mode: pure white #FFFFFF */
+  --slate-950-rgb: 255 255 255;
+
+  --gold-50-rgb: 254 249 238;
+  --gold-100-rgb: 253 240 213;
+  --gold-200-rgb: 251 225 171;
+  --gold-300-rgb: 217 119 6;     /* Amber-600 #D97706 */
+  --gold-400-rgb: 180 83 9;      /* Amber-700 for high-contrast light text #B45309 */
+  --gold-500-rgb: 217 119 6;     /* Amber-600 button bg #D97706 */
+  --gold-600-rgb: 180 83 9;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Dark Theme (Deep Navy & Pure Amber Gold) */
+  --navy-950-rgb: 7 19 28;       /* Base background #07131C */
+  --navy-900-rgb: 13 27 38;      /* Card surfaces #0D1B26 */
+  --navy-850-rgb: 17 36 51;      /* Subsurfaces, inputs #112433 */
+  --navy-800-rgb: 22 44 61;      /* Subtle dividers #162C3D */
+  --navy-750-rgb: 26 48 66;      /* Card borders #1A3042 */
+  --navy-700-rgb: 30 52 72;      /* Strong borders #1E3448 */
+  --navy-600-rgb: 36 62 86;      /* Active borders #243E56 */
+
+  --slate-50-rgb: 248 250 252;
+  --slate-100-rgb: 248 250 252;  /* Primary text #F8FAFC */
+  --slate-200-rgb: 226 232 240;  /* Secondary text #E2E8F0 */
+  --slate-300-rgb: 203 213 225;  /* Slate-300 #CBD5E1 */
+  --slate-400-rgb: 148 163 184;  /* Muted text #94A3B8 */
+  --slate-500-rgb: 100 116 139;  /* Slate-500 #64748B */
+  --slate-600-rgb: 71 85 105;
+  --slate-700-rgb: 51 65 85;
+  --slate-800-rgb: 30 41 59;
+  --slate-900-rgb: 15 23 42;
+  --slate-950-rgb: 2 6 23;
+
+  --gold-50-rgb: 254 249 238;
+  --gold-100-rgb: 253 240 213;
+  --gold-200-rgb: 251 225 171;
+  --gold-300-rgb: 248 209 129;   /* #F8D181 */
+  --gold-400-rgb: 246 197 87;    /* #F6C557 */
+  --gold-500-rgb: 245 184 46;    /* #F5B82E */
+  --gold-600-rgb: 229 168 31;
 }
 
 * {
@@ -12,23 +74,14 @@
 
 html {
   scroll-behavior: smooth;
-  font-size: 17px;
+  font-size: 15px;
 }
 
 body {
   min-height: 100vh;
-  background-color: #07131C;
-  color: #F8FAFC;
+  background-color: rgb(var(--navy-950-rgb));
+  color: rgb(var(--slate-100-rgb));
   transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.dark {
-  color-scheme: dark;
-}
-
-.dark body {
-  background-color: #07131C;
-  color: #F8FAFC;
 }
 
 input,
@@ -44,16 +97,14 @@ button {
   }
 
   .card {
-    @apply rounded-2xl border border-[#1E3448] bg-[#0D1B26] p-5 sm:p-6 shadow-soft transition-colors text-[#F8FAFC];
+    @apply rounded-2xl border border-navy-750 bg-navy-900 p-5 sm:p-6 shadow-sm transition-colors text-slate-100;
   }
 
   .label {
-    @apply block text-xs font-bold uppercase tracking-wider text-[#AAB8C5];
+    @apply block text-xs font-bold uppercase tracking-wider text-slate-400;
   }
 
   .field {
-    @apply mt-2 w-full rounded-xl border border-[#1E3448] bg-[#07131C] px-4 py-3 text-sm text-[#F8FAFC] outline-none transition focus:border-[#F5B82E] focus:ring-4 focus:ring-[#F5B82E]/20 placeholder:text-[#AAB8C5]/50 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply mt-1.5 w-full rounded-xl border border-navy-700 bg-navy-850 px-3.5 py-2.5 text-sm text-slate-100 outline-none transition focus:border-gold-500 focus:ring-4 focus:ring-gold-500/20 placeholder:text-slate-400/60 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 }
-
-

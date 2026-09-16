@@ -6,6 +6,7 @@ import { FormEvent, Suspense, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
+import { Logo } from "@/components/ui/Logo";
 import { useToast } from "@/hooks/useToast";
 import { login } from "@/services/auth-service";
 
@@ -38,11 +39,8 @@ function LoginContent() {
       {toast && <Toast message={toast.message} type={toast.type} />}
       <section className="w-full max-w-md rounded-3xl border border-navy-700 bg-navy-900 p-7 sm:p-8 shadow-2xl transition text-slate-100">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-xl font-black text-slate-100 transition hover:opacity-90">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500 font-black text-navy-950 shadow-md">
-              ◈
-            </span>
-            <span>Avalia<span className="text-gold-400">Tech</span></span>
+          <Link href="/" className="inline-flex items-center justify-center transition hover:opacity-90" aria-label="AvaliaTech">
+            <Logo size="xl" priority />
           </Link>
           <h1 className="mt-6 text-2xl font-black text-slate-100">Entrar na plataforma</h1>
           <p className="mt-2 text-sm text-slate-400">Acesse seu banco de questões e gere provas.</p>

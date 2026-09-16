@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#07131C] text-[#F8FAFC] antialiased selection:bg-[#F5B82E] selection:text-[#07131C]">
+    <div className="min-h-screen bg-navy-950 text-slate-100 antialiased selection:bg-gold-500 selection:text-white dark:selection:text-navy-950 transition-colors">
       {/* Top Navigation */}
       <LandingNavbar />
 

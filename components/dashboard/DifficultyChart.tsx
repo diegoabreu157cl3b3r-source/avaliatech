@@ -1,83 +1,124 @@
 "use client";
 
+import Link from "next/link";
+import { PlusCircle } from "lucide-react";
 import type { DificuldadeStat } from "@/services/dashboard-service";
+import { EmptyQuestionsIllustration } from "./DashboardIllustrations";
 
 interface DifficultyChartProps {
   data: DificuldadeStat[];
   totalQuestoes: number;
 }
 
-const difficultyConfig = {
+const difficultyColors = {
   Fácil: {
-    color: "bg-emerald-500",
-    textColor: "text-emerald-400",
-    badgeBg: "bg-navy-850/60 border-emerald-500/30"
+    stroke: "#10B981", // emerald-500
+    dot: "bg-emerald-500",
+    label: "Fácil"
   },
   Média: {
-    color: "bg-amber-500",
-    textColor: "text-amber-400",
-    badgeBg: "bg-navy-850/60 border-amber-500/30"
+    stroke: "#F59E0B", // amber-500
+    dot: "bg-amber-500",
+    label: "Médio"
   },
   Difícil: {
-    color: "bg-rose-500",
-    textColor: "text-rose-400",
-    badgeBg: "bg-navy-850/60 border-rose-500/30"
+    stroke: "#EF4444", // rose-500
+    dot: "bg-rose-500",
+    label: "Difícil"
   }
 };
 
 export function DifficultyChart({ data, totalQuestoes }: DifficultyChartProps) {
   if (totalQuestoes === 0) {
     return (
-      <div className="flex h-36 flex-col items-center justify-center text-center">
-        <p className="text-sm font-semibold text-slate-400">
-          Nenhuma questão cadastrada para calcular o gráfico.
+      <div className="flex flex-col items-center justify-center py-2 text-center">
+        <EmptyQuestionsIllustration className="h-16 w-16 mb-2" />
+        <p className="text-xs font-semibold text-slate-200">Ainda não há questões</p>
+        <p className="mt-0.5 text-[11px] text-slate-400 max-w-[200px]">
+          Cadastre questões para ver a distribuição de dificuldade.
         </p>
+        <Link
+          href="/questoes"
+          className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg border border-navy-700 bg-navy-850 px-3 py-1 text-xs font-semibold text-gold-400 transition hover:bg-navy-800"
+        >
+          <PlusCircle className="h-3.5 w-3.5" /> Adicionar questão
+        </Link>
       </div>
     );
   }
 
+  // Radius and Circumference for Donut
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  let accumulatedPercent = 0;
+
   return (
-    <div className="space-y-4">
-      {/* Barra de progresso segmentada */}
-      <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-navy-850 border border-navy-700">
-        {data.map((item) => {
-          if (item.total === 0) return null;
-          const config = difficultyConfig[item.dificuldade];
-          return (
-            <div
-              key={item.dificuldade}
-              style={{ width: `${item.porcentagem}%` }}
-              className={`h-full transition-all duration-500 ${config.color}`}
-              title={`${item.dificuldade}: ${item.total} (${item.porcentagem}%)`}
-            />
-          );
-        })}
+    <div className="flex items-center justify-between gap-4">
+      {/* Donut Chart SVG */}
+      <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
+        <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
+          {/* Background circle track */}
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="transparent"
+            stroke="currentColor"
+            strokeWidth="11"
+            className="text-navy-850"
+          />
+
+          {/* Segments */}
+          {data.map((item) => {
+            if (item.total === 0) return null;
+            const config = difficultyColors[item.dificuldade] || difficultyColors.Fácil;
+            const dashLength = (item.porcentagem / 100) * circumference;
+            const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
+            accumulatedPercent += item.porcentagem;
+
+            return (
+              <circle
+                key={item.dificuldade}
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="transparent"
+                stroke={config.stroke}
+                strokeWidth="11"
+                strokeDasharray={`${dashLength} ${circumference - dashLength}`}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                className="transition-all duration-700 ease-out"
+              />
+            );
+          })}
+        </svg>
+
+        {/* Center Text */}
+        <div className="absolute flex flex-col items-center justify-center text-center select-none pointer-events-none">
+          <span className="text-xl font-extrabold text-slate-100 leading-none">
+            {totalQuestoes}
+          </span>
+          <span className="text-[10px] font-semibold text-slate-400 mt-1 leading-none">
+            {totalQuestoes === 1 ? "questão" : "questões"}
+          </span>
+        </div>
       </div>
 
-      {/* Cards com detalhes por dificuldade */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {/* Legend & Stats */}
+      <div className="w-full flex-1 space-y-2.5">
         {data.map((item) => {
-          const config = difficultyConfig[item.dificuldade];
+          const config = difficultyColors[item.dificuldade] || difficultyColors.Fácil;
           return (
-            <div
-              key={item.dificuldade}
-              className={`rounded-2xl border p-3.5 transition hover:bg-navy-850 ${config.badgeBg}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300">
-                  <span className={`h-2.5 w-2.5 rounded-full ${config.color}`} />
-                  {item.dificuldade}
-                </span>
-                <span className={`text-xs font-black ${config.textColor}`}>
-                  {item.porcentagem}%
-                </span>
+            <div key={item.dificuldade} className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`h-2.5 w-2.5 rounded-full ${config.dot} shrink-0`} />
+                <span className="font-medium text-slate-300 truncate">{config.label}</span>
               </div>
-              <strong className="mt-2 block text-2xl font-black text-slate-100">
-                {item.total}
-              </strong>
-              <span className="text-[11px] text-slate-400">
-                {item.total === 1 ? "questão" : "questões"}
-              </span>
+              <div className="flex items-center gap-2 font-semibold tabular-nums">
+                <span className="text-slate-100 min-w-[32px] text-right">{item.porcentagem}%</span>
+                <span className="text-slate-400 text-[11px] min-w-[28px] text-right">({item.total})</span>
+              </div>
             </div>
           );
         })}

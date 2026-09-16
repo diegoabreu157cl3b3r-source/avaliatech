@@ -1,4 +1,4 @@
-import { Database, Filter, Shuffle, FileDown, ArrowRight } from "lucide-react";
+import { Database, Filter, Shuffle, FileDown } from "lucide-react";
 
 const steps = [
   {
@@ -29,46 +29,46 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="como-funciona" className="py-24 sm:py-32 bg-[#091722] relative border-t border-[#1E3448]/60">
+    <section id="como-funciona" className="py-20 sm:py-28 bg-navy-900/50 relative border-t border-navy-750/80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E3448] bg-[#0D1B26] px-3.5 py-1 text-xs font-bold tracking-wider uppercase text-[#F5B82E]">
+        <div className="max-w-3xl mx-auto text-center space-y-3.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-navy-700 bg-navy-900 px-3.5 py-1 text-xs font-semibold tracking-wider uppercase text-gold-400">
             Processo Inteligente
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#F8FAFC]">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-100">
             Da questão à prova em quatro etapas.
           </h2>
-          <p className="text-base sm:text-lg text-[#AAB8C5] leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
             Você não precisa selecionar manualmente questão por questão. Defina as regras da avaliação e o sistema faz o trabalho pesado.
           </p>
         </div>
 
-        {/* Steps Flow (Horizontal on desktop, vertical on mobile) */}
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-4 relative">
+        {/* Steps Flow */}
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-4 relative">
           {/* Desktop Connecting Line behind cards */}
-          <div className="hidden md:block absolute top-1/3 left-12 right-12 h-0.5 bg-gradient-to-r from-[#1E3448] via-[#F5B82E]/40 to-[#1E3448] -z-0" />
+          <div className="hidden md:block absolute top-1/3 left-12 right-12 h-0.5 bg-gradient-to-r from-navy-700 via-gold-500/30 to-navy-700 -z-0" />
 
           {steps.map((item, index) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.step}
-                className="relative z-10 flex flex-col items-center text-center rounded-2xl border border-[#1E3448] bg-[#0D1B26] p-6 sm:p-7 transition-all duration-300 hover:border-[#F5B82E]/50 hover:bg-[#112433] hover:shadow-xl shadow-black/40"
+                className="relative z-10 flex flex-col items-center text-center rounded-2xl border border-navy-750 bg-navy-900 p-5 sm:p-6 transition-all duration-300 hover:border-gold-500/50 hover:bg-navy-850 hover:shadow-lg"
               >
                 {/* Step Circle Badge */}
-                <div className="relative mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#112433] border border-[#1E3448] text-[#F5B82E] shadow-md transition group-hover:scale-110">
-                  <Icon className="h-6 w-6" />
-                  <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#F5B82E] text-[11px] font-black text-[#07131C] shadow-sm">
+                <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-850 border border-navy-700 text-gold-400 shadow-sm transition group-hover:scale-105">
+                  <Icon className="h-5 w-5" />
+                  <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-black text-white dark:text-navy-950 shadow-sm">
                     {index + 1}
                   </span>
                 </div>
 
                 {/* Step Content */}
-                <h3 className="text-lg font-bold text-[#F8FAFC]">
+                <h3 className="text-sm sm:text-base font-bold text-slate-100">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#AAB8C5]">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
                   {item.description}
                 </p>
               </div>
@@ -79,4 +79,3 @@ export function HowItWorksSection() {
     </section>
   );
 }
-

@@ -3,6 +3,7 @@
 import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import type { PaginatedResponse } from "@/types/api";
 import type { Questao } from "@/types/question";
 
@@ -47,17 +48,7 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
                 <td className="px-4 py-4 font-medium text-slate-300">{question.disciplina}</td>
                 <td className="px-4 py-4 font-semibold text-slate-100">{question.assunto}</td>
                 <td className="px-4 py-4">
-                  <span
-                    className={`rounded-full border px-3 py-0.5 text-xs font-bold ${
-                      question.dificuldade === "Fácil"
-                        ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-400"
-                        : question.dificuldade === "Média"
-                        ? "border-amber-500/40 bg-amber-950/40 text-amber-400"
-                        : "border-rose-500/40 bg-rose-950/40 text-rose-400"
-                    }`}
-                  >
-                    {question.dificuldade}
-                  </span>
+                  <DifficultyBadge difficulty={question.dificuldade} />
                 </td>
                 <td className="px-4 py-4 font-black text-gold-400">{question.correta}</td>
                 <td className="px-4 py-4">

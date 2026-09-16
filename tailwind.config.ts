@@ -26,21 +26,35 @@ const config: Config = {
           950: "#082649"
         },
         navy: {
-          950: "#07131C",
-          900: "#0D1B26",
-          850: "#112433",
-          800: "#162C3D",
-          700: "#1E3448",
-          600: "#243E56"
+          950: "rgb(var(--navy-950-rgb) / <alpha-value>)",
+          900: "rgb(var(--navy-900-rgb) / <alpha-value>)",
+          850: "rgb(var(--navy-850-rgb) / <alpha-value>)",
+          800: "rgb(var(--navy-800-rgb) / <alpha-value>)",
+          750: "rgb(var(--navy-750-rgb) / <alpha-value>)",
+          700: "rgb(var(--navy-700-rgb) / <alpha-value>)",
+          600: "rgb(var(--navy-600-rgb) / <alpha-value>)"
+        },
+        slate: {
+          50: "rgb(var(--slate-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--slate-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--slate-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--slate-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--slate-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--slate-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--slate-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--slate-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--slate-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--slate-900-rgb) / <alpha-value>)",
+          950: "rgb(var(--slate-950-rgb) / <alpha-value>)"
         },
         gold: {
-          50: "#FEF9EE",
-          100: "#FDF0D5",
-          200: "#FBE1AB",
-          300: "#F8D181",
-          400: "#F6C557",
-          500: "#F5B82E",
-          600: "#E5A81F",
+          50: "rgb(var(--gold-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--gold-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--gold-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--gold-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--gold-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--gold-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--gold-600-rgb) / <alpha-value>)",
           700: "#C98C12",
           800: "#9E6B08",
           900: "#7A5207"

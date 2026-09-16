@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, CheckCircle2, FileText, Layers, Calendar, School, User, Award } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import type { ExamDataPayload, Prova } from "@/types/exam";
 
 interface ExamPreviewModalProps {
@@ -177,9 +178,7 @@ export function ExamPreviewModal({
                     <p className="text-sm font-bold text-slate-100">
                       <span className="text-gold-400">Questão {idx + 1}.</span> {item.pergunta}
                     </p>
-                    <span className="shrink-0 rounded-full border border-navy-700 bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
-                      {item.dificuldade}
-                    </span>
+                    <DifficultyBadge difficulty={item.dificuldade} size="sm" />
                   </div>
 
                   {item.imagem && (
@@ -195,14 +194,14 @@ export function ExamPreviewModal({
                         key={alt.letra}
                         className={`flex items-start gap-2 rounded-xl p-2.5 text-xs transition ${
                           alt.letra === item.corretaFinal
-                            ? "bg-emerald-950/60 font-bold text-emerald-300 border border-emerald-500/40"
-                            : "text-slate-300"
+                            ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold dark:bg-emerald-950/60 dark:border-emerald-500/40 dark:text-emerald-300"
+                            : "text-slate-700 dark:text-slate-300"
                         }`}
                       >
                         <span className="font-bold">{alt.letra})</span>
                         <span>{alt.texto}</span>
                         {alt.letra === item.corretaFinal && (
-                          <span className="ml-auto text-[10px] text-emerald-400">
+                          <span className="ml-auto text-[10px] text-emerald-600 dark:text-emerald-400">
                             (Correta)
                           </span>
                         )}
@@ -223,9 +222,7 @@ export function ExamPreviewModal({
                     <p className="text-sm font-bold text-slate-100">
                       <span className="text-indigo-400">Questão {idx + 1}.</span> {item.pergunta}
                     </p>
-                    <span className="shrink-0 rounded-full border border-navy-700 bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
-                      {item.dificuldade}
-                    </span>
+                    <DifficultyBadge difficulty={item.dificuldade} size="sm" />
                   </div>
 
                   {item.imagem && (
@@ -241,14 +238,14 @@ export function ExamPreviewModal({
                         key={alt.letra}
                         className={`flex items-start gap-2 rounded-xl p-2.5 text-xs transition ${
                           alt.letra === item.corretaFinal
-                            ? "bg-emerald-950/60 font-bold text-emerald-300 border border-emerald-500/40"
-                            : "text-slate-300"
+                            ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold dark:bg-emerald-950/60 dark:border-emerald-500/40 dark:text-emerald-300"
+                            : "text-slate-700 dark:text-slate-300"
                         }`}
                       >
                         <span className="font-bold">{alt.letra})</span>
                         <span>{alt.texto}</span>
                         {alt.letra === item.corretaFinal && (
-                          <span className="ml-auto text-[10px] text-emerald-400">
+                          <span className="ml-auto text-[10px] text-emerald-600 dark:text-emerald-400">
                             (Correta)
                           </span>
                         )}

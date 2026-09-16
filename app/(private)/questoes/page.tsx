@@ -80,17 +80,16 @@ export default function QuestoesPage() {
   return (
     <div className="space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} />}
-      <section className="flex flex-col gap-4 rounded-3xl border border-navy-700 bg-navy-900 p-5 sm:p-6 shadow-soft transition sm:flex-row sm:items-center sm:justify-between text-slate-100">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-gold-400">Banco de questões</p>
-          <h1 className="mt-1 text-2xl font-black text-slate-100">Questões</h1>
-          <p className="mt-1.5 text-sm text-slate-400">Cadastre, filtre, edite e exclua apenas as suas questões.</p>
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Questões</h1>
+          <p className="mt-1 text-sm text-slate-400">Cadastre, filtre, edite e gerencie o seu banco de itens.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="button" variant="secondary" onClick={() => setAiModalOpen(true)} className="gap-2">
-            <Bot className="h-4 w-4 text-gold-400" /> Gerar questões com IA
+          <Button type="button" variant="secondary" onClick={() => setAiModalOpen(true)} className="gap-2 text-xs">
+            <Bot className="h-4 w-4 text-gold-400" /> Gerar com IA
           </Button>
-          <Button type="button" onClick={openCreateModal} className="gap-2">
+          <Button type="button" onClick={openCreateModal} className="gap-2 text-xs">
             <PlusCircle className="h-4 w-4" /> Nova questão
           </Button>
         </div>

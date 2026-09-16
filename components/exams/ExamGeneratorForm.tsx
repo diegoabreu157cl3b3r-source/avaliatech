@@ -85,7 +85,7 @@ export function ExamGeneratorForm() {
     }
 
     loadInitialData();
-  }, [duplicateId]);
+  }, [duplicateId, showToast]);
 
   // Atualiza distribuição personalizada quando muda a quantidade total
   useEffect(() => {
@@ -129,6 +129,11 @@ export function ExamGeneratorForm() {
       setForm((current) => ({ ...current, logoBase64: result, logoMime: file.type as "image/png" | "image/jpeg" }));
     };
     reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    setLogoPreview(null);
+    setForm((current) => ({ ...current, logoBase64: null, logoMime: null }));
   }
 
   const currentCustomSum = customDistribution.facil + customDistribution.media + customDistribution.dificil;
@@ -190,72 +195,112 @@ export function ExamGeneratorForm() {
   return (
     <>
       {toast && <Toast message={toast.message} type={toast.type} />}
-      <form className="card space-y-6" onSubmit={handleSubmit}>
-        <div>
-          <h2 className="text-xl font-black text-slate-100">Dados da prova</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            A seleção das questões é automática. Escolha as configurações e gere o PDF com versões A e B.
-          </p>
-        </div>
+      <form
+        className="rounded-2xl border border-navy-800 bg-navy-900/60 p-5 sm:p-7 shadow-xs space-y-7"
+        onSubmit={handleSubmit}
+      >
+        {/* Seção 1: Informações da Prova */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">Informações da prova</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Dados do cabeçalho institucional e parâmetros da avaliação.
+            </p>
+          </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input label="Nome da escola" value={form.escola} onChange={(event) => update("escola", event.target.value)} required />
-          <Input label="Nome do professor" value={form.professor} onChange={(event) => update("professor", event.target.value)} required />
-          <SuggestionInput
-            label="Disciplina"
-            type="discipline"
-            value={form.disciplina}
-            onChange={updateDiscipline}
-            onSelect={updateDiscipline}
-            placeholder="Digite para buscar disciplinas"
-          />
-          <Input label="Data da prova" type="date" value={form.dataProva} onChange={(event) => update("dataProva", event.target.value)} required />
-          <Input label="Valor da avaliação" value={form.valorAvaliacao} onChange={(event) => update("valorAvaliacao", event.target.value)} placeholder="Ex.: 10,0" required />
-          <Select
-            label="Quantidade de questões"
-            value={form.quantidadeQuestoes}
-            onChange={(event) => update("quantidadeQuestoes", Number(event.target.value) as GenerateExamRequest["quantidadeQuestoes"])}
-            options={QUANTIDADES_PROVA.map((item) => ({ label: `${item} questões`, value: item }))}
-          />
-        </div>
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <Input
+              label="Nome da escola"
+              value={form.escola}
+              onChange={(event) => update("escola", event.target.value)}
+              required
+            />
+            <Input
+              label="Nome do professor"
+              value={form.professor}
+              onChange={(event) => update("professor", event.target.value)}
+              required
+            />
+            <SuggestionInput
+              label="Disciplina"
+              type="discipline"
+              value={form.disciplina}
+              onChange={updateDiscipline}
+              onSelect={updateDiscipline}
+              placeholder="Digite para buscar disciplinas"
+            />
+            <Input
+              label="Data da prova"
+              type="date"
+              value={form.dataProva}
+              onChange={(event) => update("dataProva", event.target.value)}
+              required
+            />
+            <Input
+              label="Valor da avaliação"
+              value={form.valorAvaliacao}
+              onChange={(event) => update("valorAvaliacao", event.target.value)}
+              placeholder="Ex.: 10,0"
+              required
+            />
+            <Select
+              label="Quantidade de questões"
+              value={form.quantidadeQuestoes}
+              onChange={(event) =>
+                update(
+                  "quantidadeQuestoes",
+                  Number(event.target.value) as GenerateExamRequest["quantidadeQuestoes"]
+                )
+              }
+              options={QUANTIDADES_PROVA.map((item) => ({
+                label: `${item} questões`,
+                value: item
+              }))}
+            />
+          </div>
+        </section>
 
-        {/* Seleção de Assuntos */}
-        <div className="rounded-2xl border border-navy-700 bg-navy-850/40 p-4.5 transition">
-          <div className="mb-3 flex items-center justify-between gap-3">
+        {/* Seção 2: Conteúdo e Assuntos */}
+        <section className="border-t border-navy-800 pt-6 space-y-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="label">Assuntos</p>
-              <p className="text-xs text-slate-400">Selecione um ou mais assuntos da disciplina escolhida.</p>
+              <h2 className="text-sm font-semibold text-slate-100">Conteúdo</h2>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Selecione os tópicos da disciplina que serão cobrados.
+              </p>
             </div>
             {form.assuntos.length > 0 && (
               <button
                 type="button"
                 onClick={() => update("assuntos", [])}
-                className="text-xs font-bold text-gold-400 hover:text-gold-300 hover:underline"
+                className="text-xs font-medium text-gold-400 hover:text-gold-300 hover:underline"
               >
                 Limpar seleção
               </button>
             )}
           </div>
+
           {form.assuntos.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 py-1">
               {form.assuntos.map((assunto) => (
                 <span
                   key={assunto}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gold-500 px-3 py-1 text-xs font-black text-navy-950 shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-navy-800 border border-navy-700 px-2.5 py-1 text-xs font-medium text-slate-200"
                 >
                   <span>{assunto}</span>
                   <button
                     type="button"
                     onClick={() => removeSubject(assunto)}
                     aria-label={`Remover ${assunto}`}
-                    className="rounded-full p-0.5 text-navy-950/80 transition hover:bg-gold-600 hover:text-navy-950"
+                    className="rounded p-0.5 text-slate-400 transition hover:text-rose-400"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
             </div>
           )}
+
           <SuggestionInput
             label="Adicionar assunto"
             type="subject"
@@ -264,32 +309,34 @@ export function ExamGeneratorForm() {
             onSelect={addSubject}
             discipline={form.disciplina}
             disabled={!form.disciplina}
-            placeholder={form.disciplina ? "Digite para buscar assuntos" : "Escolha uma disciplina primeiro"}
+            placeholder={
+              form.disciplina
+                ? "Digite para buscar assuntos"
+                : "Escolha uma disciplina primeiro"
+            }
           />
-          <p className="mt-2 flex items-center gap-1 text-xs text-slate-400"><Plus className="h-3.5 w-3.5 text-gold-400" /> Selecione uma sugestão para adicionar o assunto.</p>
-        </div>
+        </section>
 
-        {/* Gerador Inteligente de Dificuldade */}
-        <div className="rounded-2xl border border-navy-700 bg-navy-850/40 p-4.5 transition">
-          <div className="mb-3">
-            <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-gold-400" />
-              Distribuição de Dificuldade
-            </h3>
-            <p className="text-xs text-slate-400">
-              Escolha uma dificuldade única ou utilize distribuição inteligente balanceada / personalizada.
+        {/* Seção 3: Dificuldade */}
+        <section className="border-t border-navy-800 pt-6 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">
+              Distribuição de dificuldade
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Defina como o sistema deve selecionar os níveis das questões.
             </p>
           </div>
 
-          {/* Seletor de Modo */}
-          <div className="grid gap-2 sm:grid-cols-3 mb-4">
+          {/* Escolha natural de botões */}
+          <div className="grid gap-2 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setModoDificuldade("unica")}
-              className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
+              className={`rounded-lg border px-3 py-2.5 text-xs font-semibold transition text-left sm:text-center ${
                 modoDificuldade === "unica"
-                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
+                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
               }`}
             >
               Dificuldade única
@@ -298,10 +345,10 @@ export function ExamGeneratorForm() {
             <button
               type="button"
               onClick={() => setModoDificuldade("automatica")}
-              className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
+              className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
                 modoDificuldade === "automatica"
-                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
+                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
               }`}
             >
               <Sparkles className="h-3.5 w-3.5 text-gold-400" />
@@ -311,68 +358,73 @@ export function ExamGeneratorForm() {
             <button
               type="button"
               onClick={() => setModoDificuldade("personalizada")}
-              className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
+              className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
                 modoDificuldade === "personalizada"
-                  ? "border-gold-500 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-700 bg-navy-900 text-slate-300 hover:bg-navy-850 hover:text-slate-100"
+                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
               }`}
             >
               <Sliders className="h-3.5 w-3.5" />
-              Distribuição personalizada
+              Personalizada
             </button>
           </div>
 
-          {/* Conteúdo de acordo com o modo selecionado */}
+          {/* Modo Único */}
           {modoDificuldade === "unica" && (
-            <div className="max-w-md">
+            <div className="max-w-xs pt-1">
               <Select
                 label="Nível de dificuldade"
                 value={form.dificuldade}
-                onChange={(event) => update("dificuldade", event.target.value as GenerateExamRequest["dificuldade"])}
+                onChange={(event) =>
+                  update(
+                    "dificuldade",
+                    event.target.value as GenerateExamRequest["dificuldade"]
+                  )
+                }
                 options={DIFICULDADES.map((item) => ({ label: item, value: item }))}
               />
             </div>
           )}
 
+          {/* Modo Automático */}
           {modoDificuldade === "automatica" && (
-            <div className="rounded-xl border border-navy-700 bg-navy-900/80 p-4">
-              <p className="text-xs font-bold text-gold-400">
-                Distribuição calculada para {form.quantidadeQuestoes} questões:
+            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3.5">
+              <p className="text-xs font-medium text-slate-300">
+                Distribuição proporcional para {form.quantidadeQuestoes} questões:
               </p>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
-                  <span className="text-[11px] font-bold text-emerald-400">Fácil</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.facil}</strong>
-                  <span className="text-[10px] text-slate-400">questões</span>
-                </div>
-                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
-                  <span className="text-[11px] font-bold text-amber-400">Média</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.media}</strong>
-                  <span className="text-[10px] text-slate-400">questões</span>
-                </div>
-                <div className="rounded-xl border border-navy-700 bg-navy-850 p-2.5 shadow-xs">
-                  <span className="text-[11px] font-bold text-rose-400">Difícil</span>
-                  <strong className="mt-1 block text-lg font-black text-slate-100">{autoDist.dificil}</strong>
-                  <span className="text-[10px] text-slate-400">questões</span>
-                </div>
+              <div className="mt-2.5 flex flex-wrap gap-4 text-xs">
+                <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Fácil: <strong className="text-slate-100">{autoDist.facil}</strong>
+                </span>
+                <span className="flex items-center gap-1.5 font-medium text-amber-400">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Média: <strong className="text-slate-100">{autoDist.media}</strong>
+                </span>
+                <span className="flex items-center gap-1.5 font-medium text-rose-400">
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
+                  Difícil: <strong className="text-slate-100">{autoDist.dificil}</strong>
+                </span>
               </div>
             </div>
           )}
 
+          {/* Modo Personalizado */}
           {modoDificuldade === "personalizada" && (
-            <div className="space-y-4">
+            <div className="space-y-3 pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {/* Fácil */}
-                <div className="rounded-2xl border border-emerald-500/30 bg-navy-900/80 p-4 transition">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                      Fácil
-                    </label>
-                    <span className="text-[11px] font-semibold text-emerald-400">
-                      {Math.round((customDistribution.facil / (form.quantidadeQuestoes || 1)) * 100)}%
+                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-emerald-400">Fácil</span>
+                    <span className="text-[11px] text-slate-400">
+                      {Math.round(
+                        (customDistribution.facil / (form.quantidadeQuestoes || 1)) * 100
+                      )}
+                      %
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() =>
@@ -381,7 +433,7 @@ export function ExamGeneratorForm() {
                           facil: Math.max(0, curr.facil - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Diminuir fáceis"
                     >
                       -
@@ -397,7 +449,7 @@ export function ExamGeneratorForm() {
                           facil: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
+                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
                     />
                     <button
                       type="button"
@@ -407,7 +459,7 @@ export function ExamGeneratorForm() {
                           facil: Math.min(form.quantidadeQuestoes, curr.facil + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Aumentar fáceis"
                     >
                       +
@@ -416,16 +468,17 @@ export function ExamGeneratorForm() {
                 </div>
 
                 {/* Média */}
-                <div className="rounded-2xl border border-amber-500/30 bg-navy-900/80 p-4 transition">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                      Média
-                    </label>
-                    <span className="text-[11px] font-semibold text-amber-400">
-                      {Math.round((customDistribution.media / (form.quantidadeQuestoes || 1)) * 100)}%
+                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-amber-400">Média</span>
+                    <span className="text-[11px] text-slate-400">
+                      {Math.round(
+                        (customDistribution.media / (form.quantidadeQuestoes || 1)) * 100
+                      )}
+                      %
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() =>
@@ -434,7 +487,7 @@ export function ExamGeneratorForm() {
                           media: Math.max(0, curr.media - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Diminuir médias"
                     >
                       -
@@ -450,7 +503,7 @@ export function ExamGeneratorForm() {
                           media: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
+                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
                     />
                     <button
                       type="button"
@@ -460,7 +513,7 @@ export function ExamGeneratorForm() {
                           media: Math.min(form.quantidadeQuestoes, curr.media + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Aumentar médias"
                     >
                       +
@@ -469,16 +522,17 @@ export function ExamGeneratorForm() {
                 </div>
 
                 {/* Difícil */}
-                <div className="rounded-2xl border border-rose-500/30 bg-navy-900/80 p-4 transition">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-rose-400">
-                      Difícil
-                    </label>
-                    <span className="text-[11px] font-semibold text-rose-400">
-                      {Math.round((customDistribution.dificil / (form.quantidadeQuestoes || 1)) * 100)}%
+                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-rose-400">Difícil</span>
+                    <span className="text-[11px] text-slate-400">
+                      {Math.round(
+                        (customDistribution.dificil / (form.quantidadeQuestoes || 1)) * 100
+                      )}
+                      %
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() =>
@@ -487,7 +541,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.max(0, curr.dificil - 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Diminuir difíceis"
                     >
                       -
@@ -503,7 +557,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.max(0, Number(e.target.value))
                         }))
                       }
-                      className="h-10 w-full rounded-xl border border-navy-700 bg-navy-950 text-center text-lg font-black text-slate-100 outline-none transition focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"
+                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
                     />
                     <button
                       type="button"
@@ -513,7 +567,7 @@ export function ExamGeneratorForm() {
                           dificil: Math.min(form.quantidadeQuestoes, curr.dificil + 1)
                         }))
                       }
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-850 text-base font-black text-slate-200 transition hover:bg-navy-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
                       aria-label="Aumentar difíceis"
                     >
                       +
@@ -522,50 +576,107 @@ export function ExamGeneratorForm() {
                 </div>
               </div>
 
-              {/* Validador de soma em tempo real */}
+              {/* Indicador de soma */}
               <div
-                className={`flex items-center justify-between rounded-xl border p-3 text-xs font-semibold ${
+                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium ${
                   isCustomSumValid
-                    ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-300"
-                    : "border-amber-500/40 bg-amber-950/40 text-amber-300"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
                   {isCustomSumValid ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-400" />
+                    <AlertCircle className="h-3.5 w-3.5" />
                   )}
                   {isCustomSumValid
-                    ? "Soma correta das dificuldades."
+                    ? "Total distribuído corretamente."
                     : `Distribuição atual: ${currentCustomSum} de ${form.quantidadeQuestoes} questões.`}
                 </span>
-                <span className="font-bold">
+                <span className="font-semibold">
                   {currentCustomSum} / {form.quantidadeQuestoes}
                 </span>
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Upload de Logo */}
-        <div className="rounded-3xl border border-dashed border-navy-700 p-4 transition">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl bg-navy-950/60 p-5 text-center transition hover:bg-navy-850/60">
-            {logoPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoPreview} alt="Prévia da logo" className="max-h-24 rounded-xl object-contain" />
-            ) : (
-              <ImagePlus className="h-10 w-10 text-slate-400" />
-            )}
-            <span className="text-sm font-bold text-slate-200">Enviar logo da escola</span>
-            <span className="text-xs text-slate-400">PNG, JPG ou JPEG até 2 MB</span>
-            <input className="sr-only" type="file" accept="image/png,image/jpeg" onChange={(event) => handleLogoChange(event.target.files?.[0])} />
-          </label>
-        </div>
+        {/* Seção 4: Identidade da Escola */}
+        <section className="border-t border-navy-800 pt-6 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">Identidade da escola</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Logomarca para exibição no cabeçalho impresso (opcional).
+            </p>
+          </div>
 
-        <Button type="submit" isLoading={isLoading} className="w-full gap-2 md:w-auto">
-          <Download className="h-4 w-4" /> Gerar PDF da prova
-        </Button>
+          {logoPreview ? (
+            <div className="flex items-center justify-between rounded-xl border border-navy-800 bg-navy-950/50 p-3">
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoPreview}
+                  alt="Logo anexada"
+                  className="h-10 w-10 rounded-lg border border-navy-800 bg-navy-900 object-contain p-1"
+                />
+                <div>
+                  <p className="text-xs font-semibold text-slate-200">Logomarca anexada</p>
+                  <p className="text-[11px] text-slate-400">
+                    Será exibida no cabeçalho da avaliação.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer text-xs font-semibold text-gold-400 hover:text-gold-300">
+                  Alterar
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    onChange={(event) => handleLogoChange(event.target.files?.[0])}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={removeLogo}
+                  className="text-xs font-medium text-slate-400 hover:text-rose-400"
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-navy-750 bg-navy-950/40 p-4 transition hover:bg-navy-850/40">
+              <ImagePlus className="h-5 w-5 text-slate-400" />
+              <div className="text-left">
+                <span className="block text-xs font-semibold text-slate-200">
+                  + Adicionar logo da escola
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  PNG, JPG ou JPEG &bull; até 2 MB
+                </span>
+              </div>
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={(event) => handleLogoChange(event.target.files?.[0])}
+              />
+            </label>
+          )}
+        </section>
+
+        {/* Seção 5: Ação de Finalização */}
+        <div className="border-t border-navy-800 pt-6 flex justify-end">
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            className="w-full sm:w-auto gap-2 px-6 py-2.5 text-xs font-semibold"
+          >
+            <Download className="h-4 w-4" /> Gerar PDF da prova
+          </Button>
+        </div>
       </form>
     </>
   );

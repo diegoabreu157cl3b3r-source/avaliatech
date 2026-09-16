@@ -12,24 +12,25 @@ import {
   Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 
 const navigationSections = [
   {
-    title: "VISÃO GERAL",
+    title: "Visão geral",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
     ]
   },
   {
-    title: "BANCO & PROVAS",
+    title: "Banco de provas",
     items: [
-      { href: "/questoes", label: "Questões", icon: FileText },
-      { href: "/gerar-prova", label: "Gerar Prova", icon: BarChart3, highlight: true },
+      { href: "/questoes", label: "Questões", icon: FileText, highlight: true },
+      { href: "/gerar-prova", label: "Gerar Prova", icon: BarChart3 },
       { href: "/provas", label: "Histórico", icon: History }
     ]
   },
   {
-    title: "CONTA",
+    title: "Conta",
     items: [
       { href: "/perfil", label: "Perfil", icon: User }
     ]
@@ -53,19 +54,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         onClick={onClose}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col overflow-y-auto border-r border-navy-700 bg-navy-900 p-5 transition duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col overflow-y-auto border-r border-navy-800 bg-navy-900 p-5 transition duration-300 lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2.5 text-lg font-black tracking-tight text-slate-100"
+            className="flex items-center transition hover:opacity-90 py-0.5"
+            aria-label="AvaliaTech Dashboard"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold-500 font-black text-navy-950 shadow-md">
-              ◈
-            </span>
-            <span>Avalia<span className="text-gold-400">Tech</span></span>
+            <Logo size="md" />
           </Link>
           <Button
             type="button"
@@ -81,11 +80,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <nav className="mt-8 flex flex-1 flex-col gap-6">
           {navigationSections.map((section) => (
-            <div key={section.title} className="space-y-1.5">
-              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div key={section.title} className="space-y-1">
+              <p className="px-3 text-xs font-semibold text-slate-400">
                 {section.title}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const active = pathname === item.href;
@@ -94,18 +93,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       key={item.href}
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-bold transition ${
+                      className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
                         active
-                          ? "border border-navy-700 bg-navy-850 text-gold-400 shadow-sm"
-                          : "text-slate-300 hover:border-transparent hover:bg-navy-850/60 hover:text-slate-100"
+                          ? "bg-navy-850 text-gold-400 font-semibold border border-navy-750 shadow-xs"
+                          : "text-slate-300 font-medium hover:bg-navy-850/50 hover:text-slate-100"
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className={`h-4.5 w-4.5 ${active ? "text-gold-400" : "text-slate-400"}`} />
+                      <div className="flex items-center gap-2.5">
+                        <Icon className={`h-4 w-4 ${active ? "text-gold-400" : "text-slate-400"}`} />
                         <span>{item.label}</span>
                       </div>
-                      {item.highlight && !active && (
-                        <span className="flex items-center gap-1 rounded-md bg-gold-500/15 px-1.5 py-0.5 text-[10px] font-extrabold text-gold-400 border border-gold-500/25">
+                      {item.highlight && (
+                        <span
+                          className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold border ${
+                            active
+                              ? "bg-gold-500/20 text-gold-400 border-gold-500/30"
+                              : "bg-gold-500/10 text-gold-400 border-gold-500/20"
+                          }`}
+                        >
                           <Sparkles className="h-2.5 w-2.5" /> IA
                         </span>
                       )}
@@ -117,9 +122,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        <div className="mt-auto border-t border-navy-700/80 pt-4 text-center">
-          <p className="text-[11px] text-slate-400">
-            AvaliaTech &bull; SaaS Acadêmico
+        <div className="mt-auto border-t border-navy-800 pt-3 text-center">
+          <p className="text-[11px] font-normal text-slate-400">
+            AvaliaTech &bull; Gestão de Avaliações
           </p>
         </div>
       </aside>
