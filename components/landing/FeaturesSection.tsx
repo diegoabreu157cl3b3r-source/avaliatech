@@ -47,7 +47,6 @@ const features = [
     icon: Sparkles,
     title: "IA Integrada",
     href: "#ia",
-    highlight: true,
     description:
       "Gere questões completas e contextualizadas com inteligência artificial, revise cada alternativa e salve no seu banco."
   },
@@ -86,11 +85,7 @@ export function FeaturesSection() {
               <Link
                 key={feature.number}
                 href={feature.href}
-                className={`group relative rounded-2xl border bg-navy-900 p-6 transition-all duration-300 hover:bg-navy-850 hover:shadow-lg flex flex-col justify-between cursor-pointer ${
-                  feature.highlight
-                    ? "border-gold-500/60 shadow-xs hover:border-gold-500"
-                    : "border-navy-750 hover:border-gold-500/50"
-                }`}
+                className="group relative rounded-2xl border border-navy-750 bg-navy-900 p-6 transition-all duration-300 hover:border-gold-500/50 hover:bg-navy-850 hover:shadow-lg flex flex-col justify-between cursor-pointer"
               >
                 {/* Top: Icon + Number */}
                 <div>
@@ -104,9 +99,7 @@ export function FeaturesSection() {
                   </div>
 
                   {/* Content */}
-                  <h3 className={`mt-5 text-base sm:text-lg font-bold transition ${
-                    feature.highlight ? "text-gold-400" : "text-slate-100 group-hover:text-gold-400"
-                  }`}>
+                  <h3 className="mt-5 text-base sm:text-lg font-bold text-slate-100 group-hover:text-gold-400 transition">
                     {feature.title}
                   </h3>
                   <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-400">
@@ -115,9 +108,7 @@ export function FeaturesSection() {
                 </div>
 
                 {/* Subtle bottom action line */}
-                <div className={`mt-5 pt-3.5 border-t border-navy-750 flex items-center justify-between text-xs font-semibold transition ${
-                  feature.highlight ? "text-gold-400" : "text-slate-400 group-hover:text-gold-400"
-                }`}>
+                <div className="mt-5 pt-3.5 border-t border-navy-750 flex items-center justify-between text-xs font-semibold text-slate-400 group-hover:text-gold-400 transition">
                   <span>Saiba mais</span>
                   <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                 </div>

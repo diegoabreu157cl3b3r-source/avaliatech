@@ -54,10 +54,10 @@ export function HowItWorksSection() {
             return (
               <div
                 key={item.step}
-                className="relative z-10 flex flex-col items-center text-center rounded-2xl border border-navy-750 bg-navy-900 p-5 sm:p-6 transition-all duration-300 hover:border-gold-500/50 hover:bg-navy-850 hover:shadow-lg"
+                className="relative z-10 flex flex-col items-center text-center rounded-2xl border border-navy-750 bg-navy-900/90 p-5 sm:p-6 shadow-xs select-none"
               >
                 {/* Step Circle Badge */}
-                <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-850 border border-navy-700 text-gold-400 shadow-sm transition group-hover:scale-105">
+                <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-850 border border-navy-700 text-gold-400 shadow-sm">
                   <Icon className="h-5 w-5" />
                   <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-black text-white dark:text-navy-950 shadow-sm">
                     {index + 1}
