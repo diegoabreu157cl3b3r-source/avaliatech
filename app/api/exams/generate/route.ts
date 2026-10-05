@@ -5,7 +5,7 @@ import { invalidateDashboardCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activity";
 import { generateExamSchema } from "@/lib/validators";
 import { cleanText } from "@/lib/sanitizers";
-import { buildExamVersions, calculateAutoDistribution, shuffleArray } from "@/lib/exam";
+import { buildExamVersions, calculateAdaptiveAutoDistribution, calculateAutoDistribution, shuffleArray } from "@/lib/exam";
 import { createExamPdf } from "@/lib/pdf";
 import { fail, handleApiError, validationFail } from "@/lib/response";
 import { isValidLogo } from "@/lib/upload";
@@ -94,15 +94,6 @@ export async function POST(request: Request) {
       selectedIds = shuffleArray(compatibleRows.map((r) => r.id)).slice(0, data.quantidadeQuestoes);
       dificuldadeArmazenada = data.dificuldade;
     } else {
-      // Distribuição Inteligente (Automática ou Personalizada)
-      const targetDistribution: DistribuicaoDificuldade =
-        modoDificuldade === "automatica"
-          ? calculateAutoDistribution(data.quantidadeQuestoes)
-          : data.distribuicao!;
-
-      distribuicaoUtilizada = targetDistribution;
-      dificuldadeArmazenada = modoDificuldade === "automatica" ? "Balanceada" : "Personalizada";
-
       // Fetch only IDs and difficulty for fast lightweight distribution check
       const allCompatible = await query<{ id: number; dificuldade: "Fácil" | "Média" | "Difícil" }[]>(
         `SELECT id, dificuldade
@@ -120,6 +111,34 @@ export async function POST(request: Request) {
       const easyIds = allCompatible.filter((q) => q.dificuldade === "Fácil").map((q) => q.id);
       const mediumIds = allCompatible.filter((q) => q.dificuldade === "Média").map((q) => q.id);
       const hardIds = allCompatible.filter((q) => q.dificuldade === "Difícil").map((q) => q.id);
+      const totalCompatible = allCompatible.length;
+
+      if (totalCompatible < data.quantidadeQuestoes) {
+        return fail(
+          `Não existem questões suficientes no seu banco para gerar esta prova. Foram encontradas ${totalCompatible} questões no total (Fácil: ${easyIds.length}, Média: ${mediumIds.length}, Difícil: ${hardIds.length}), mas são necessárias ${data.quantidadeQuestoes}.`,
+          422
+        );
+      }
+
+      let targetDistribution: DistribuicaoDificuldade;
+
+      if (modoDificuldade === "personalizada" && data.distribuicao) {
+        targetDistribution = data.distribuicao;
+      } else if (
+        data.distribuicao &&
+        data.distribuicao.facil + data.distribuicao.media + data.distribuicao.dificil === data.quantidadeQuestoes
+      ) {
+        targetDistribution = data.distribuicao;
+      } else {
+        targetDistribution = calculateAdaptiveAutoDistribution(data.quantidadeQuestoes, {
+          facil: easyIds.length,
+          media: mediumIds.length,
+          dificil: hardIds.length
+        }).distribution;
+      }
+
+      distribuicaoUtilizada = targetDistribution;
+      dificuldadeArmazenada = modoDificuldade === "automatica" ? "Balanceada" : "Personalizada";
 
       const shortages: string[] = [];
       if (easyIds.length < targetDistribution.facil) {
@@ -134,7 +153,7 @@ export async function POST(request: Request) {
 
       if (shortages.length > 0) {
         return fail(
-          `Não existem questões suficientes para atender à distribuição escolhida. ${shortages.join("; ")}.`,
+          `Não existem questões suficientes para atender à distribuição solicitada. ${shortages.join("; ")}.`,
           422
         );
       }

@@ -22,7 +22,6 @@ export async function GET() {
       difficultyRows,
       disciplineRows,
       recentQuestions,
-      recentExams,
       activityRows
     ] = await Promise.all([
       // 1. Consolidated totals for questions, disciplines and subjects
@@ -72,18 +71,7 @@ export async function GET() {
         { usuarioId: user.id }
       ),
 
-      // 6. Recent exams for dashboard display
-      query(
-        `SELECT id, usuario_id, escola, professor, disciplina, assunto, dificuldade,
-                quantidade_questoes, versao, data_prova, valor_avaliacao, created_at
-         FROM provas
-         WHERE usuario_id = :usuarioId
-         ORDER BY created_at DESC
-         LIMIT 4`,
-        { usuarioId: user.id }
-      ),
-
-      // 7. Recent activities (with safe fallback)
+      // 6. Recent activities (with safe fallback)
       query<{
         id: number;
         tipo: "questao_criada" | "questao_editada" | "questao_excluida" | "prova_gerada" | "prova_excluida";
@@ -173,8 +161,7 @@ export async function GET() {
       questoesPorDificuldade,
       questoesPorDisciplina,
       recentQuestions,
-      recentActivities,
-      recentExams
+      recentActivities
     };
 
     // Cache the result for subsequent requests

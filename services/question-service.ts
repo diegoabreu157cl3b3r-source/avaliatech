@@ -42,6 +42,29 @@ export function deleteQuestion(id: number) {
   return http<ApiResponse<null>>(`/api/questions/${id}`, { method: "DELETE" });
 }
 
+export interface DifficultyAvailability {
+  total: number;
+  facil: number;
+  media: number;
+  dificil: number;
+}
+
+export function getQuestionsAvailability(
+  disciplina: string,
+  assuntos?: string[],
+  signal?: AbortSignal
+) {
+  const params = new URLSearchParams();
+  if (disciplina) params.set("disciplina", disciplina);
+  if (assuntos && assuntos.length > 0) {
+    params.set("assuntos", assuntos.join(","));
+  }
+  return http<ApiResponse<DifficultyAvailability>>(
+    `/api/questions/availability?${params.toString()}`,
+    { signal }
+  );
+}
+
 export async function uploadQuestionImage(file: File) {
   const formData = new FormData();
   formData.append("image", file);

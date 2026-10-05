@@ -11,31 +11,31 @@ export async function GET() {
   try {
     const user = await requireAuth();
 
-    // 1 e 2. Buscar disciplinas e assuntos do usuário em paralelo
-    const [disciplines, subjects] = await Promise.all([
-      query<Disciplina[]>(
-        `SELECT d.id, d.usuario_id, d.nome, d.created_at, d.updated_at,
-                COUNT(DISTINCT a.id) AS total_assuntos,
-                COUNT(DISTINCT q.id) AS total_questoes
-         FROM disciplinas d
-         LEFT JOIN assuntos a ON a.disciplina_id = d.id AND a.usuario_id = d.usuario_id
-         LEFT JOIN questoes q ON (q.disciplina_id = d.id OR (q.disciplina = d.nome AND q.usuario_id = d.usuario_id))
-         WHERE d.usuario_id = :usuarioId
-         GROUP BY d.id
-         ORDER BY d.nome ASC`,
-        { usuarioId: user.id }
-      ),
-      query<Assunto[]>(
-        `SELECT a.id, a.disciplina_id, a.usuario_id, a.nome, a.created_at, a.updated_at,
-                COUNT(q.id) AS total_questoes
-         FROM assuntos a
-         LEFT JOIN questoes q ON (q.assunto_id = a.id OR (q.assunto = a.nome AND q.disciplina_id = a.disciplina_id AND q.usuario_id = a.usuario_id))
-         WHERE a.usuario_id = :usuarioId
-         GROUP BY a.id
-         ORDER BY a.nome ASC`,
-        { usuarioId: user.id }
-      )
-    ]);
+    // 1. Buscar todas as disciplinas do usuário com contagem de questões e assuntos
+    const disciplines = await query<Disciplina[]>(
+      `SELECT d.id, d.usuario_id, d.nome, d.created_at, d.updated_at,
+              COUNT(DISTINCT a.id) AS total_assuntos,
+              COUNT(DISTINCT q.id) AS total_questoes
+       FROM disciplinas d
+       LEFT JOIN assuntos a ON a.disciplina_id = d.id AND a.usuario_id = d.usuario_id
+       LEFT JOIN questoes q ON (q.disciplina_id = d.id OR (q.disciplina = d.nome AND q.usuario_id = d.usuario_id))
+       WHERE d.usuario_id = :usuarioId
+       GROUP BY d.id
+       ORDER BY d.nome ASC`,
+      { usuarioId: user.id }
+    );
+
+    // 2. Buscar todos os assuntos do usuário
+    const subjects = await query<Assunto[]>(
+      `SELECT a.id, a.disciplina_id, a.usuario_id, a.nome, a.created_at, a.updated_at,
+              COUNT(q.id) AS total_questoes
+       FROM assuntos a
+       LEFT JOIN questoes q ON (q.assunto_id = a.id OR (q.assunto = a.nome AND q.disciplina_id = a.disciplina_id AND q.usuario_id = a.usuario_id))
+       WHERE a.usuario_id = :usuarioId
+       GROUP BY a.id
+       ORDER BY a.nome ASC`,
+      { usuarioId: user.id }
+    );
 
     // 3. Montar a lista aninhada
     const result: DisciplinaWithAssuntos[] = disciplines.map((disc) => ({

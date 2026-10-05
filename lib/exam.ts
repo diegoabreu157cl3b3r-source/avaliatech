@@ -16,6 +16,20 @@ export function selectRandomQuestions(questions: Questao[], quantity: number) {
   return shuffleArray(questions).slice(0, quantity);
 }
 
+export interface AvailableDifficultyCounts {
+  facil: number;
+  media: number;
+  dificil: number;
+  total: number;
+}
+
+export interface AdaptiveAutoResult {
+  distribution: DistribuicaoDificuldade;
+  isAdjusted: boolean;
+  hasEnoughTotal: boolean;
+  totalAvailable: number;
+}
+
 /**
  * Calcula balanceamento equilibrado (~30% Fácil, 50% Média, 20% Difícil)
  * para 10, 15, 20 e 25 questões, garantindo que a soma seja exata.
@@ -37,6 +51,94 @@ export function calculateAutoDistribution(totalQuantity: number): DistribuicaoDi
       return { facil, media, dificil };
     }
   }
+}
+
+/**
+ * Calcula uma sugestão real e adaptativa baseada na quantidade real
+ * de questões cadastradas no banco para a disciplina/assuntos selecionados.
+ */
+export function calculateAdaptiveAutoDistribution(
+  totalQuantity: number,
+  available?: { facil: number; media: number; dificil: number } | null
+): AdaptiveAutoResult {
+  const ideal = calculateAutoDistribution(totalQuantity);
+
+  if (!available) {
+    return {
+      distribution: ideal,
+      isAdjusted: false,
+      hasEnoughTotal: true,
+      totalAvailable: totalQuantity
+    };
+  }
+
+  const totalAvailable = available.facil + available.media + available.dificil;
+  const hasEnoughTotal = totalAvailable >= totalQuantity;
+
+  // Se o banco possui questões suficientes em todas as 3 dificuldades ideais
+  if (
+    available.facil >= ideal.facil &&
+    available.media >= ideal.media &&
+    available.dificil >= ideal.dificil
+  ) {
+    return {
+      distribution: ideal,
+      isAdjusted: false,
+      hasEnoughTotal: true,
+      totalAvailable
+    };
+  }
+
+  // Se o banco não tem o total de questões necessário
+  if (!hasEnoughTotal) {
+    return {
+      distribution: {
+        facil: Math.min(ideal.facil, available.facil),
+        media: Math.min(ideal.media, available.media),
+        dificil: Math.min(ideal.dificil, available.dificil)
+      },
+      isAdjusted: true,
+      hasEnoughTotal: false,
+      totalAvailable
+    };
+  }
+
+  // Alocação adaptativa respeitando os limites reais de cada nível
+  let facil = Math.min(ideal.facil, available.facil);
+  let media = Math.min(ideal.media, available.media);
+  let dificil = Math.min(ideal.dificil, available.dificil);
+
+  let remaining = totalQuantity - (facil + media + dificil);
+
+  while (remaining > 0) {
+    let allocated = false;
+
+    // Prioriza Média -> Fácil -> Difícil para manter a prova balanceada
+    if (media < available.media && remaining > 0) {
+      media++;
+      remaining--;
+      allocated = true;
+    }
+    if (facil < available.facil && remaining > 0) {
+      facil++;
+      remaining--;
+      allocated = true;
+    }
+    if (dificil < available.dificil && remaining > 0) {
+      dificil++;
+      remaining--;
+      allocated = true;
+    }
+
+    if (!allocated) break;
+  }
+
+  return {
+    distribution: { facil, media, dificil },
+    isAdjusted: true,
+    hasEnoughTotal: true,
+    totalAvailable
+  };
 }
 
 export function selectQuestionsByDistribution(

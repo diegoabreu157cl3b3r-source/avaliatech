@@ -11,9 +11,10 @@ import { SuggestionInput } from "@/components/ui/SuggestionInput";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { DIFICULDADES, QUANTIDADES_PROVA } from "@/lib/constants";
-import { calculateAutoDistribution } from "@/lib/exam";
+import { calculateAdaptiveAutoDistribution, calculateAutoDistribution } from "@/lib/exam";
 import { getDisciplines } from "@/services/discipline-service";
 import { generateExamPdf, getExamDetails } from "@/services/exam-service";
+import { getQuestionsAvailability, type DifficultyAvailability } from "@/services/question-service";
 import { getProfile } from "@/services/profile-service";
 import type { DisciplinaWithAssuntos } from "@/types/discipline";
 import type { DistribuicaoDificuldade, GenerateExamRequest, ModoDificuldade } from "@/types/exam";
@@ -33,6 +34,9 @@ export function ExamGeneratorForm() {
     media: 5,
     dificil: 2
   });
+
+  const [availableCounts, setAvailableCounts] = useState<DifficultyAvailability | null>(null);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
 
   const [form, setForm] = useState<GenerateExamRequest>({
     escola: "",
@@ -106,6 +110,34 @@ export function ExamGeneratorForm() {
     setCustomDistribution(auto);
   }, [form.quantidadeQuestoes]);
 
+  // Consulta disponibilidade real de questões no banco por dificuldade em tempo real
+  useEffect(() => {
+    if (!form.disciplina) {
+      setAvailableCounts(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsLoadingAvailability(true);
+
+    getQuestionsAvailability(form.disciplina, form.assuntos, controller.signal)
+      .then((res) => {
+        if (res.data) {
+          setAvailableCounts(res.data);
+        }
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      })
+      .finally(() => {
+        setIsLoadingAvailability(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [form.disciplina, form.assuntos]);
+
   function update<K extends keyof GenerateExamRequest>(key: K, value: GenerateExamRequest[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
@@ -151,7 +183,10 @@ export function ExamGeneratorForm() {
 
   const currentCustomSum = customDistribution.facil + customDistribution.media + customDistribution.dificil;
   const isCustomSumValid = currentCustomSum === form.quantidadeQuestoes;
-  const autoDist = calculateAutoDistribution(form.quantidadeQuestoes);
+  const adaptiveResult = calculateAdaptiveAutoDistribution(
+    form.quantidadeQuestoes,
+    availableCounts
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -163,6 +198,14 @@ export function ExamGeneratorForm() {
     if (modoDificuldade === "personalizada" && !isCustomSumValid) {
       showToast(
         `Você selecionou ${form.quantidadeQuestoes} questões, mas a distribuição atual totaliza ${currentCustomSum}.`,
+        "error"
+      );
+      return;
+    }
+
+    if (modoDificuldade === "automatica" && availableCounts && !adaptiveResult.hasEnoughTotal) {
+      showToast(
+        `Seu banco possui apenas ${availableCounts.total} questões cadastradas para esta seleção (necessárias: ${form.quantidadeQuestoes}).`,
         "error"
       );
       return;
@@ -181,7 +224,7 @@ export function ExamGeneratorForm() {
           : form.dificuldade,
       distribuicao:
         modoDificuldade === "automatica"
-          ? autoDist
+          ? adaptiveResult.distribution
           : modoDificuldade === "personalizada"
           ? customDistribution
           : null
@@ -463,26 +506,102 @@ export function ExamGeneratorForm() {
             </div>
           )}
 
-          {/* Modo Automático */}
+          {/* Modo Automático com Análise Real do Banco de Questões */}
           {modoDificuldade === "automatica" && (
-            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3.5">
-              <p className="text-xs font-medium text-slate-300">
-                Distribuição proporcional para {form.quantidadeQuestoes} questões:
-              </p>
-              <div className="mt-2.5 flex flex-wrap gap-4 text-xs">
-                <span className="flex items-center gap-1.5 font-medium text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Fácil: <strong className="text-slate-100">{autoDist.facil}</strong>
-                </span>
-                <span className="flex items-center gap-1.5 font-medium text-amber-400">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Média: <strong className="text-slate-100">{autoDist.media}</strong>
-                </span>
-                <span className="flex items-center gap-1.5 font-medium text-rose-400">
-                  <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  Difícil: <strong className="text-slate-100">{autoDist.dificil}</strong>
-                </span>
+            <div className="rounded-xl border border-navy-800 bg-navy-950/60 p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-navy-800/80 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-gold-400 shrink-0" />
+                  <span className="text-xs font-bold text-slate-200">
+                    Sugestão inteligente para {form.quantidadeQuestoes} questões
+                  </span>
+                </div>
+                {isLoadingAvailability ? (
+                  <span className="text-[11px] text-slate-400 animate-pulse">
+                    Consultando banco de questões...
+                  </span>
+                ) : availableCounts && form.disciplina ? (
+                  <span className="text-[11px] font-medium text-slate-400">
+                    Disponíveis no banco: <strong className="text-slate-100">{availableCounts.total}</strong>
+                  </span>
+                ) : null}
               </div>
+
+              {/* Status do Banco de Questões do Professor */}
+              {form.disciplina && availableCounts ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                    <span>Disponíveis por nível:</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-navy-900 border border-navy-750 px-2 py-0.5 text-emerald-400 font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      {availableCounts.facil} {availableCounts.facil === 1 ? "fácil" : "fáceis"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-navy-900 border border-navy-750 px-2 py-0.5 text-amber-400 font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                      {availableCounts.media} {availableCounts.media === 1 ? "média" : "médias"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-navy-900 border border-navy-750 px-2 py-0.5 text-rose-400 font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+                      {availableCounts.dificil} {availableCounts.dificil === 1 ? "difícil" : "difíceis"}
+                    </span>
+                  </div>
+
+                  {/* Sugestão de Distribuição Real */}
+                  <div className="rounded-lg bg-navy-900/80 border border-navy-750 p-3.5">
+                    <p className="text-xs font-semibold text-slate-200 mb-2.5">
+                      Distribuição sugerida para a prova:
+                    </p>
+                    <div className="flex flex-wrap gap-4 text-xs">
+                      <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                        Fácil: <strong className="text-slate-100">{adaptiveResult.distribution.facil}</strong>
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium text-amber-400">
+                        <span className="h-2 w-2 rounded-full bg-amber-400" />
+                        Média: <strong className="text-slate-100">{adaptiveResult.distribution.media}</strong>
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium text-rose-400">
+                        <span className="h-2 w-2 rounded-full bg-rose-400" />
+                        Difícil: <strong className="text-slate-100">{adaptiveResult.distribution.dificil}</strong>
+                      </span>
+                    </div>
+
+                    {adaptiveResult.isAdjusted && adaptiveResult.hasEnoughTotal && (
+                      <p className="mt-2.5 text-[11px] text-gold-400 flex items-center gap-1.5">
+                        <Sparkles className="h-3 w-3 shrink-0" />
+                        Proporção adaptada automaticamente com base nas questões cadastradas no seu banco.
+                      </p>
+                    )}
+
+                    {!adaptiveResult.hasEnoughTotal && (
+                      <p className="mt-2.5 text-[11px] text-rose-400 flex items-center gap-1.5 font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        Seu banco tem apenas {availableCounts.total} questões para esta seleção (necessárias: {form.quantidadeQuestoes}).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-navy-900/50 border border-navy-800 p-3">
+                  <p className="text-xs text-slate-400">
+                    Selecione a disciplina e assuntos acima para ver a sugestão real do seu banco de questões.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-4 text-xs">
+                    <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      Fácil: <strong className="text-slate-100">{adaptiveResult.distribution.facil}</strong>
+                    </span>
+                    <span className="flex items-center gap-1.5 font-medium text-amber-400">
+                      <span className="h-2 w-2 rounded-full bg-amber-400" />
+                      Média: <strong className="text-slate-100">{adaptiveResult.distribution.media}</strong>
+                    </span>
+                    <span className="flex items-center gap-1.5 font-medium text-rose-400">
+                      <span className="h-2 w-2 rounded-full bg-rose-400" />
+                      Difícil: <strong className="text-slate-100">{adaptiveResult.distribution.dificil}</strong>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
