@@ -1,5 +1,6 @@
-﻿import { db, query } from "@/lib/db";
+import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { invalidateDashboardCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activity";
 import { buildExamVersions } from "@/lib/exam";
 import { fail, handleApiError, ok } from "@/lib/response";
@@ -122,6 +123,8 @@ export async function DELETE(_request: Request, context: RouteParams) {
       "DELETE FROM provas WHERE id = :id AND usuario_id = :usuarioId",
       { id: examId, usuarioId: user.id }
     );
+
+    invalidateDashboardCache(user.id);
 
     await logActivity(
       user.id,

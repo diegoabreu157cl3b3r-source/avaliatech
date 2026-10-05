@@ -1,6 +1,7 @@
 import type { ResultSetHeader } from "mysql2";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { invalidateDashboardCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activity";
 import { questionSchema } from "@/lib/validators";
 import { cleanText } from "@/lib/sanitizers";
@@ -58,6 +59,7 @@ export async function PUT(request: Request, context: RouteContext) {
     );
     if (current[0].imagem && current[0].imagem !== data.imagem) await removeQuestionImage(current[0].imagem);
 
+    invalidateDashboardCache(user.id);
     await logActivity(user.id, "questao_editada", `Questão editada em ${data.disciplina}`, `Assunto: ${data.assunto} · ${data.dificuldade}`);
 
     return ok({ id, ...data }, "Questão atualizada com sucesso.");
@@ -80,6 +82,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     await db.execute<ResultSetHeader>("DELETE FROM questoes WHERE id = :id AND usuario_id = :usuarioId", { id, usuarioId: user.id });
     if (current[0].imagem) await removeQuestionImage(current[0].imagem);
 
+    invalidateDashboardCache(user.id);
     await logActivity(user.id, "questao_excluida", `Questão excluída em ${current[0].disciplina}`, `Assunto: ${current[0].assunto}`);
 
     return ok(null, "Questão excluída com sucesso.");

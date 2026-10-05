@@ -8,6 +8,15 @@ export interface Usuario {
   updated_at?: string;
 }
 
+export interface UserRow {
+  id: number;
+  nome: string;
+  email: string;
+  senha?: string;
+  logo_base64?: string | null;
+  logo_mime?: string | null;
+}
+
 export interface AuthUser {
   id: number;
   nome: string;

@@ -34,12 +34,11 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [statsRes, examsRes] = await Promise.all([
-          getDashboardStats().catch(() => ({ data: null })),
-          getExams({ limit: 4 }).catch(() => ({ data: null }))
-        ]);
-        setStats(statsRes.data ?? null);
-        setRecentExams(examsRes.data?.items ?? []);
+        const statsRes = await getDashboardStats().catch(() => ({ data: null }));
+        if (statsRes.data) {
+          setStats(statsRes.data);
+          setRecentExams(statsRes.data.recentExams ?? []);
+        }
       } finally {
         setIsLoading(false);
       }

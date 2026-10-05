@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { Download, CheckCircle2, FileText, Layers, Calendar, School, User, Award } from "lucide-react";
+import { Download, CheckCircle2, FileText, Layers, Calendar, School, User, Award, Mail } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
@@ -14,6 +12,7 @@ interface ExamPreviewModalProps {
   dataPayload: ExamDataPayload | null;
   onDownload: (exam: Prova) => Promise<void>;
   isDownloading: boolean;
+  onSendEmail?: (exam: Prova) => void;
 }
 
 export function ExamPreviewModal({
@@ -22,7 +21,8 @@ export function ExamPreviewModal({
   exam,
   dataPayload,
   onDownload,
-  isDownloading
+  isDownloading,
+  onSendEmail
 }: ExamPreviewModalProps) {
   const [activeTab, setActiveTab] = useState<"info" | "versionA" | "versionB" | "answerKey">("info");
 
@@ -306,9 +306,19 @@ export function ExamPreviewModal({
           <Button type="button" variant="ghost" onClick={onClose}>
             Fechar
           </Button>
+          {onSendEmail && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="gap-2 text-xs"
+              onClick={() => onSendEmail(exam)}
+            >
+              <Mail className="h-4 w-4 text-sky-400" /> Enviar por e-mail
+            </Button>
+          )}
           <Button
             type="button"
-            className="gap-2"
+            className="gap-2 text-xs"
             onClick={() => onDownload(exam)}
             isLoading={isDownloading}
           >

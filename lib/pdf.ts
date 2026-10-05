@@ -42,15 +42,35 @@ export function calculateQuestionHeight(questionLines: string[], alternativeLine
     + LAYOUT.textToImage + (image ? image.height + LAYOUT.imageToAlternatives : 0) + alternatives + LAYOUT.questionGap;
 }
 
-async function embedQuestionImage(pdfDoc: PDFDocument, path: string | null | undefined, columnWidth: number) {
-  const bytes = await readQuestionImage(path); if (!bytes || !path) return null;
+async function embedQuestionImage(
+  pdfDoc: PDFDocument,
+  path: string | null | undefined,
+  columnWidth: number,
+  imageCache?: Map<string, PositionedImage | null>
+): Promise<PositionedImage | null> {
+  if (!path) return null;
+  if (imageCache && imageCache.has(path)) {
+    return imageCache.get(path) ?? null;
+  }
+  const bytes = await readQuestionImage(path);
+  if (!bytes) {
+    if (imageCache) imageCache.set(path, null);
+    return null;
+  }
   try {
     const extension = path.split(".").pop()?.toLowerCase();
-    const image = extension === "png" ? await pdfDoc.embedPng(bytes)
-      : extension === "webp" ? await pdfDoc.embedPng(await sharp(bytes).png().toBuffer())
+    const image = extension === "png"
+      ? await pdfDoc.embedPng(bytes)
+      : extension === "webp"
+      ? await pdfDoc.embedPng(await sharp(bytes).png().toBuffer())
       : await pdfDoc.embedJpg(bytes);
-    return calculateImageHeight(image, columnWidth);
-  } catch { return null; }
+    const positioned = calculateImageHeight(image, columnWidth);
+    if (imageCache) imageCache.set(path, positioned);
+    return positioned;
+  } catch {
+    if (imageCache) imageCache.set(path, null);
+    return null;
+  }
 }
 
 export function drawImage(page: PDFPage, image: PositionedImage, columnX: number, columnWidth: number, y: number) {
@@ -95,9 +115,16 @@ function drawLabelValue(
   page.drawText(` ${value}`, { x: x + labelWidth, y, size, font: regularFont, color });
 }
 
-export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: PdfHeaderData, title: string) {
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+export async function drawHeader(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  header: PdfHeaderData,
+  title: string,
+  fonts?: { regular: PDFFont; bold: PDFFont },
+  preloadedLogo?: PDFImage | null
+) {
+  const regular = fonts?.regular ?? (await pdfDoc.embedFont(StandardFonts.Helvetica));
+  const bold = fonts?.bold ?? (await pdfDoc.embedFont(StandardFonts.HelveticaBold));
   const top = PAGE.height - LAYOUT.margin;
   const boxHeight = 90;
   const boxWidth = PAGE.width - LAYOUT.margin * 2;
@@ -118,11 +145,21 @@ export async function drawHeader(pdfDoc: PDFDocument, page: PDFPage, header: Pdf
   const logoMaxW = 64;
   const logoMaxH = 64;
   const logoAreaW = 76;
-  const logo = parseDataUrl(header.logoBase64);
 
-  if (logo) {
+  let image: PDFImage | null = preloadedLogo ?? null;
+  if (image === null && preloadedLogo === undefined && header.logoBase64) {
+    const logo = parseDataUrl(header.logoBase64);
+    if (logo) {
+      try {
+        image = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes);
+      } catch {
+        image = null;
+      }
+    }
+  }
+
+  if (image) {
     try {
-      const image = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes);
       const scale = Math.min(logoMaxW / image.width, logoMaxH / image.height, 1);
       const w = image.width * scale;
       const h = image.height * scale;
@@ -202,10 +239,11 @@ export async function drawSubsequentHeader(
   header: PdfHeaderData,
   version: string,
   pageIndex: number,
-  totalPages: number
+  totalPages: number,
+  fonts?: { regular: PDFFont; bold: PDFFont }
 ) {
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const regular = fonts?.regular ?? (await pdfDoc.embedFont(StandardFonts.Helvetica));
+  const bold = fonts?.bold ?? (await pdfDoc.embedFont(StandardFonts.HelveticaBold));
   const top = PAGE.height - LAYOUT.margin;
 
   page.drawText(`AvaliaTech — Prova Versão ${version}`, {
@@ -265,24 +303,38 @@ function preferredFontSize(question: QuestaoDaProva) {
   return LAYOUT.minimumQuestionFontSize;
 }
 
-async function createQuestionLayout(pdfDoc: PDFDocument, question: QuestaoDaProva, regular: PDFFont, columnWidth: number, questionFontSize: number): Promise<QuestionLayout> {
+async function createQuestionLayout(
+  pdfDoc: PDFDocument,
+  question: QuestaoDaProva,
+  regular: PDFFont,
+  columnWidth: number,
+  questionFontSize: number,
+  imageCache?: Map<string, PositionedImage | null>
+): Promise<QuestionLayout> {
   const alternativeFontSize = Math.max(LAYOUT.minimumQuestionFontSize, questionFontSize - .5);
   const questionLineHeight = questionFontSize * 1.2;
   const alternativeLineHeight = alternativeFontSize * 1.16;
   const questionLines = wrapText(question.pergunta, regular, questionFontSize, columnWidth);
   const alternativeLines = question.alternativas.map((alternative) => wrapText(`${alternative.letra}) ${alternative.texto}`, regular, alternativeFontSize, columnWidth - 10));
-  const image = await embedQuestionImage(pdfDoc, question.imagem, columnWidth);
+  const image = await embedQuestionImage(pdfDoc, question.imagem, columnWidth, imageCache);
   return { questionLines, alternativeLines, image, questionFontSize, alternativeFontSize, questionLineHeight, alternativeLineHeight, height: calculateQuestionHeight(questionLines, alternativeLines, image, questionLineHeight, alternativeLineHeight) };
 }
 
-async function createColumnLayouts(pdfDoc: PDFDocument, questions: QuestaoDaProva[], regular: PDFFont, columnWidth: number, availableHeight: number) {
+async function createColumnLayouts(
+  pdfDoc: PDFDocument,
+  questions: QuestaoDaProva[],
+  regular: PDFFont,
+  columnWidth: number,
+  availableHeight: number,
+  imageCache?: Map<string, PositionedImage | null>
+) {
   const fontSizes = questions.map(preferredFontSize);
-  let layouts = await Promise.all(questions.map((question, index) => createQuestionLayout(pdfDoc, question, regular, columnWidth, fontSizes[index])));
+  let layouts = await Promise.all(questions.map((question, index) => createQuestionLayout(pdfDoc, question, regular, columnWidth, fontSizes[index], imageCache)));
   while (layouts.reduce((total, layout) => total + layout.height, 0) > availableHeight) {
     const candidate = layouts.map((layout, index) => ({ index, height: layout.height })).filter(({ index }) => fontSizes[index] > LAYOUT.minimumQuestionFontSize).sort((a, b) => b.height - a.height)[0];
     if (!candidate) break;
     fontSizes[candidate.index] -= 1;
-    layouts[candidate.index] = await createQuestionLayout(pdfDoc, questions[candidate.index], regular, columnWidth, fontSizes[candidate.index]);
+    layouts[candidate.index] = await createQuestionLayout(pdfDoc, questions[candidate.index], regular, columnWidth, fontSizes[candidate.index], imageCache);
   }
   return layouts;
 }
@@ -294,9 +346,15 @@ export function drawQuestion(page: PDFPage, layout: QuestionLayout, number: numb
   y = drawAlternatives(page, regular, layout.alternativeLines, column.x + 10, y, layout.alternativeFontSize, layout.alternativeLineHeight); column.y = y - LAYOUT.questionGap; column.questionCount += 1;
 }
 
-async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: PdfHeaderData) {
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+async function drawExamPage(
+  pdfDoc: PDFDocument,
+  version: VersaoProva,
+  header: PdfHeaderData,
+  fonts: { regular: PDFFont; bold: PDFFont },
+  logoImage: PDFImage | null,
+  imageCache: Map<string, PositionedImage | null>
+) {
+  const { regular, bold } = fonts;
   const title = `Avaliação - Versão ${version.versao}`;
   const columnWidth = (PAGE.width - LAYOUT.margin * 2 - LAYOUT.columnGap) / LAYOUT.columnsPerPage;
   const questionsPerPage = LAYOUT.questionsPerColumn * LAYOUT.columnsPerPage;
@@ -309,9 +367,9 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
 
     let bodyTop: number;
     if (isFirstPage) {
-      bodyTop = await drawHeader(pdfDoc, page, header, title);
+      bodyTop = await drawHeader(pdfDoc, page, header, title, fonts, logoImage);
     } else {
-      bodyTop = await drawSubsequentHeader(pdfDoc, page, header, version.versao, pageIndex, totalPagesInVersion);
+      bodyTop = await drawSubsequentHeader(pdfDoc, page, header, version.versao, pageIndex, totalPagesInVersion, fonts);
     }
 
     const availableHeight = bodyTop - (LAYOUT.margin + LAYOUT.footerReserve);
@@ -323,8 +381,8 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
       { x: LAYOUT.margin + columnWidth + LAYOUT.columnGap, y: bodyTop, questionCount: 0 }
     ];
     const layoutsByColumn = await Promise.all([
-      createColumnLayouts(pdfDoc, leftQuestions, regular, columnWidth, availableHeight),
-      createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight)
+      createColumnLayouts(pdfDoc, leftQuestions, regular, columnWidth, availableHeight, imageCache),
+      createColumnLayouts(pdfDoc, rightQuestions, regular, columnWidth, availableHeight, imageCache)
     ]);
     for (let columnIndex = 0; columnIndex < LAYOUT.columnsPerPage; columnIndex++) {
       layoutsByColumn[columnIndex].forEach((layout, questionIndex) =>
@@ -344,12 +402,67 @@ async function drawExamPage(pdfDoc: PDFDocument, version: VersaoProva, header: P
   }
 }
 
-async function drawAnswerKeyPage(pdfDoc: PDFDocument, version: VersaoProva, header: PdfHeaderData) {
-  const page = pdfDoc.addPage([PAGE.width, PAGE.height]); const regular = await pdfDoc.embedFont(StandardFonts.Helvetica); const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold); let y = await drawHeader(pdfDoc, page, header, `Gabarito - Versão ${version.versao}`);
-  page.drawText("Questão", { x: LAYOUT.margin, y, size: 10, font: bold, color: rgb(.03, .19, .34) }); page.drawText("Resposta", { x: LAYOUT.margin + 90, y, size: 10, font: bold, color: rgb(.03, .19, .34) }); page.drawText("Questão", { x: LAYOUT.margin + 220, y, size: 10, font: bold, color: rgb(.03, .19, .34) }); page.drawText("Resposta", { x: LAYOUT.margin + 310, y, size: 10, font: bold, color: rgb(.03, .19, .34) }); y -= 16;
-  const middle = Math.ceil(version.questoes.length / 2); const left = version.questoes.slice(0, middle); const right = version.questoes.slice(middle);
-  for (let index = 0; index < middle; index++) { const rowY = y - index * 18; const rowColor = index % 2 === 0 ? rgb(.98, .99, 1) : rgb(.94, .97, .99); page.drawRectangle({ x: LAYOUT.margin, y: rowY - 5, width: 180, height: 14, color: rowColor }); page.drawText(String(index + 1).padStart(2, "0"), { x: LAYOUT.margin + 8, y: rowY, size: 9, font: regular }); page.drawText(left[index].corretaFinal, { x: LAYOUT.margin + 112, y: rowY, size: 9, font: bold }); if (right[index]) { page.drawRectangle({ x: LAYOUT.margin + 220, y: rowY - 5, width: 180, height: 14, color: rowColor }); page.drawText(String(index + 1 + middle).padStart(2, "0"), { x: LAYOUT.margin + 228, y: rowY, size: 9, font: regular }); page.drawText(right[index].corretaFinal, { x: LAYOUT.margin + 332, y: rowY, size: 9, font: bold }); } }
+async function drawAnswerKeyPage(
+  pdfDoc: PDFDocument,
+  version: VersaoProva,
+  header: PdfHeaderData,
+  fonts: { regular: PDFFont; bold: PDFFont },
+  logoImage: PDFImage | null
+) {
+  const page = pdfDoc.addPage([PAGE.width, PAGE.height]);
+  const { regular, bold } = fonts;
+  let y = await drawHeader(pdfDoc, page, header, `Gabarito - Versão ${version.versao}`, fonts, logoImage);
+  page.drawText("Questão", { x: LAYOUT.margin, y, size: 10, font: bold, color: rgb(.03, .19, .34) });
+  page.drawText("Resposta", { x: LAYOUT.margin + 90, y, size: 10, font: bold, color: rgb(.03, .19, .34) });
+  page.drawText("Questão", { x: LAYOUT.margin + 220, y, size: 10, font: bold, color: rgb(.03, .19, .34) });
+  page.drawText("Resposta", { x: LAYOUT.margin + 310, y, size: 10, font: bold, color: rgb(.03, .19, .34) });
+  y -= 16;
+  const middle = Math.ceil(version.questoes.length / 2);
+  const left = version.questoes.slice(0, middle);
+  const right = version.questoes.slice(middle);
+  for (let index = 0; index < middle; index++) {
+    const rowY = y - index * 18;
+    const rowColor = index % 2 === 0 ? rgb(.98, .99, 1) : rgb(.94, .97, .99);
+    page.drawRectangle({ x: LAYOUT.margin, y: rowY - 5, width: 180, height: 14, color: rowColor });
+    page.drawText(String(index + 1).padStart(2, "0"), { x: LAYOUT.margin + 8, y: rowY, size: 9, font: regular });
+    page.drawText(left[index].corretaFinal, { x: LAYOUT.margin + 112, y: rowY, size: 9, font: bold });
+    if (right[index]) {
+      page.drawRectangle({ x: LAYOUT.margin + 220, y: rowY - 5, width: 180, height: 14, color: rowColor });
+      page.drawText(String(index + 1 + middle).padStart(2, "0"), { x: LAYOUT.margin + 228, y: rowY, size: 9, font: regular });
+      page.drawText(right[index].corretaFinal, { x: LAYOUT.margin + 332, y: rowY, size: 9, font: bold });
+    }
+  }
   page.drawText(`Gerado automaticamente em ${header.generatedAt.toLocaleDateString("pt-BR")}.`, { x: LAYOUT.margin, y: 40, size: 8, font: regular, color: rgb(.35, .4, .45) });
 }
 
-export async function createExamPdf(header: GenerateExamRequest, versionA: VersaoProva, versionB: VersaoProva) { const pdfDoc = await PDFDocument.create(); const headerData: PdfHeaderData = { ...header, generatedAt: new Date() }; pdfDoc.setTitle(`Avaliação ${header.disciplina}`); pdfDoc.setAuthor("AvaliaTech"); await drawExamPage(pdfDoc, versionA, headerData); await drawAnswerKeyPage(pdfDoc, versionA, headerData); await drawExamPage(pdfDoc, versionB, headerData); await drawAnswerKeyPage(pdfDoc, versionB, headerData); return pdfDoc.save(); }
+export async function createExamPdf(header: GenerateExamRequest, versionA: VersaoProva, versionB: VersaoProva) {
+  const pdfDoc = await PDFDocument.create();
+  const headerData: PdfHeaderData = { ...header, generatedAt: new Date() };
+  pdfDoc.setTitle(`Avaliação ${header.disciplina}`);
+  pdfDoc.setAuthor("AvaliaTech");
+
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = { regular, bold };
+
+  let logoImage: PDFImage | null = null;
+  if (header.logoBase64) {
+    const logo = parseDataUrl(header.logoBase64);
+    if (logo) {
+      try {
+        logoImage = logo.mime === "image/png" ? await pdfDoc.embedPng(logo.bytes) : await pdfDoc.embedJpg(logo.bytes);
+      } catch {
+        logoImage = null;
+      }
+    }
+  }
+
+  const imageCache = new Map<string, PositionedImage | null>();
+
+  await drawExamPage(pdfDoc, versionA, headerData, fonts, logoImage, imageCache);
+  await drawAnswerKeyPage(pdfDoc, versionA, headerData, fonts, logoImage);
+  await drawExamPage(pdfDoc, versionB, headerData, fonts, logoImage, imageCache);
+  await drawAnswerKeyPage(pdfDoc, versionB, headerData, fonts, logoImage);
+
+  return pdfDoc.save();
+}

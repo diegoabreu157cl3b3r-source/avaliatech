@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   FileText,
   History,
   LayoutDashboard,
@@ -24,6 +25,7 @@ const navigationSections = [
   {
     title: "Banco de provas",
     items: [
+      { href: "/disciplinas", label: "Disciplinas", icon: BookOpen },
       { href: "/questoes", label: "Questões", icon: FileText, highlight: true },
       { href: "/gerar-prova", label: "Gerar Prova", icon: BarChart3 },
       { href: "/provas", label: "Histórico", icon: History }

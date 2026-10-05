@@ -1,5 +1,6 @@
 import { http } from "@/services/http";
 import type { ApiResponse } from "@/types/api";
+import type { Prova } from "@/types/exam";
 
 export interface DificuldadeStat {
   dificuldade: "Fácil" | "Média" | "Difícil";
@@ -37,6 +38,7 @@ export interface DashboardStats {
     created_at: string;
   }>;
   recentActivities: AtividadeRecente[];
+  recentExams?: Prova[];
 }
 
 export function getDashboardStats() {

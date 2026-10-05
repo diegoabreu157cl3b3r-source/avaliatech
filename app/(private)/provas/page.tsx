@@ -1,36 +1,49 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import { Download, Eye, RefreshCw, Copy, Trash2, Calendar, Award, School, User, Layers } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Download, Eye, RefreshCw, Copy, Trash2, Calendar, Award, School, User, Layers, Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { ExamFilters } from "@/components/exams/ExamFilters";
-import { ExamPreviewModal } from "@/components/exams/ExamPreviewModal";
 import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import {
   deleteExam,
   downloadHistoricalExamPdf,
   generateExamPdf,
   getExamDetails,
-  getExams
+  getExams,
+  sendExamByEmail
 } from "@/services/exam-service";
 import type { PaginatedResponse } from "@/types/api";
 import type { ExamDataPayload, ExamFilters as ExamFiltersType, Prova } from "@/types/exam";
+
+const ExamPreviewModal = dynamic(
+  () => import("@/components/exams/ExamPreviewModal").then((mod) => mod.ExamPreviewModal),
+  { ssr: false }
+);
 
 export default function ProvasPage() {
   const router = useRouter();
   const { toast, showToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<number | null>(null);
   const [deletingExam, setDeletingExam] = useState<Prova | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Send Email Modal
+  const [emailExam, setEmailExam] = useState<Prova | null>(null);
+  const [destinationEmail, setDestinationEmail] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Preview Modal
   const [previewExam, setPreviewExam] = useState<Prova | null>(null);
@@ -47,17 +60,35 @@ export default function ProvasPage() {
     periodo: "todos"
   });
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const loadExams = useCallback(async () => {
-    setIsLoading(true);
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    if (!data) setIsLoading(true);
+    else setIsUpdating(true);
+
     try {
-      const response = await getExams(filters);
+      const response = await getExams(filters, controller.signal);
       setData(response.data ?? null);
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
       showToast(error instanceof Error ? error.message : "Erro ao carregar provas.", "error");
     } finally {
-      setIsLoading(false);
+      if (abortControllerRef.current === controller) {
+        setIsLoading(false);
+        setIsUpdating(false);
+        abortControllerRef.current = null;
+      }
     }
-  }, [filters, showToast]);
+  }, [data, filters, showToast]);
 
   useEffect(() => {
     loadExams();
@@ -146,15 +177,52 @@ export default function ProvasPage() {
     router.push(`/gerar-prova?duplicar=${exam.id}`);
   }
 
+  function openSendEmailModal(exam: Prova) {
+    setEmailExam(exam);
+    setDestinationEmail("");
+  }
+
+  async function handleSendEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!emailExam || !destinationEmail.trim()) return;
+
+    setIsSendingEmail(true);
+    try {
+      await sendExamByEmail(emailExam.id, destinationEmail.trim());
+      showToast(
+        `PDF da prova enviado com sucesso para ${destinationEmail.trim()}.`,
+        "success"
+      );
+      setEmailExam(null);
+      setDestinationEmail("");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Erro ao enviar e-mail.",
+        "error"
+      );
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!deletingExam) return;
+    const previousData = data;
+    if (data) {
+      setData({
+        ...data,
+        items: data.items.filter((item) => item.id !== deletingExam.id),
+        total: Math.max(0, data.total - 1)
+      });
+    }
+
     setIsDeleting(true);
     try {
       await deleteExam(deletingExam.id);
       showToast("Prova excluída com sucesso.", "success");
       setDeletingExam(null);
-      loadExams();
     } catch (error) {
+      setData(previousData);
       showToast(error instanceof Error ? error.message : "Erro ao excluir prova.", "error");
     } finally {
       setIsDeleting(false);
@@ -194,7 +262,7 @@ export default function ProvasPage() {
         onReset={handleResetFilters}
       />
 
-      {isLoading && <Skeleton className="h-72" />}
+      {isLoading && !data && <Skeleton className="h-72" />}
 
       {!isLoading && (!data || data.items.length === 0) && (
         <EmptyState
@@ -207,8 +275,8 @@ export default function ProvasPage() {
         />
       )}
 
-      {!isLoading && data && data.items.length > 0 && (
-        <div className="card overflow-hidden p-0">
+      {data && data.items.length > 0 && (
+        <div className={`card overflow-hidden p-0 transition-opacity duration-200 ${isUpdating ? "opacity-60" : "opacity-100"}`}>
           {/* Tabela para Desktop */}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
@@ -248,6 +316,18 @@ export default function ProvasPage() {
                           title="Visualizar prova"
                         >
                           <Eye className="h-4 w-4" />
+                        </Button>
+
+                        {/* Enviar por e-mail */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openSendEmailModal(exam)}
+                          aria-label="Enviar por e-mail"
+                          title="Enviar PDF da prova por e-mail"
+                        >
+                          <Mail className="h-4 w-4 text-sky-400" />
                         </Button>
 
                         {/* Baixar PDF */}
@@ -366,8 +446,63 @@ export default function ProvasPage() {
           dataPayload={previewPayload}
           onDownload={handleDownload}
           isDownloading={downloadingId === previewExam.id}
+          onSendEmail={(exam) => {
+            setPreviewExam(null);
+            setPreviewPayload(null);
+            openSendEmailModal(exam);
+          }}
         />
       )}
+
+      {/* Modal Enviar Prova por E-mail */}
+      <Modal
+        isOpen={Boolean(emailExam)}
+        onClose={() => setEmailExam(null)}
+        title="Enviar Prova por E-mail"
+        description={`Prova de ${emailExam?.disciplina} (${emailExam?.quantidade_questoes} questões)`}
+      >
+        <form onSubmit={handleSendEmail} className="space-y-4">
+          <div className="rounded-xl border border-navy-750 bg-navy-850/60 p-3.5 text-xs space-y-1.5">
+            <p className="text-slate-300">
+              <strong className="text-slate-100">Escola:</strong> {emailExam?.escola}
+            </p>
+            <p className="text-slate-300">
+              <strong className="text-slate-100">Assuntos:</strong> {emailExam?.assunto}
+            </p>
+            <p className="text-slate-300">
+              <strong className="text-slate-100">Anexo:</strong> PDF com 4 páginas (Versão A, Gabarito A, Versão B, Gabarito B)
+            </p>
+          </div>
+
+          <Input
+            label="E-mail de Destino"
+            type="email"
+            value={destinationEmail}
+            onChange={(e) => setDestinationEmail(e.target.value)}
+            placeholder="destinatario@escola.com"
+            required
+            autoFocus
+          />
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-navy-800">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setEmailExam(null)}
+              disabled={isSendingEmail}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isSendingEmail}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" /> Enviar PDF por E-mail
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal de Confirmação de Exclusão */}
       <Modal
@@ -404,4 +539,3 @@ export default function ProvasPage() {
     </div>
   );
 }
-

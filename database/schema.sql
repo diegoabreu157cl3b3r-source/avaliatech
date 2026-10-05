@@ -4,8 +4,12 @@ CREATE DATABASE IF NOT EXISTS avaliatech
 
 USE avaliatech;
 
+DROP TABLE IF EXISTS recuperacao_senha;
+DROP TABLE IF EXISTS atividades;
 DROP TABLE IF EXISTS provas;
 DROP TABLE IF EXISTS questoes;
+DROP TABLE IF EXISTS assuntos;
+DROP TABLE IF EXISTS disciplinas;
 DROP TABLE IF EXISTS usuarios;
 
 CREATE TABLE usuarios (
@@ -21,9 +25,47 @@ CREATE TABLE usuarios (
   UNIQUE KEY uk_usuarios_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE disciplinas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  nome VARCHAR(120) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_usuario_disciplina (usuario_id, nome),
+  KEY idx_disciplinas_usuario (usuario_id),
+  CONSTRAINT fk_disciplinas_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE assuntos (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  disciplina_id INT UNSIGNED NOT NULL,
+  usuario_id INT UNSIGNED NOT NULL,
+  nome VARCHAR(120) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_disciplina_assunto (disciplina_id, nome),
+  KEY idx_assuntos_disciplina (disciplina_id),
+  KEY idx_assuntos_usuario (usuario_id),
+  CONSTRAINT fk_assuntos_disciplina
+    FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_assuntos_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE questoes (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   usuario_id INT UNSIGNED NOT NULL,
+  disciplina_id INT UNSIGNED NULL,
+  assunto_id INT UNSIGNED NULL,
   pergunta TEXT NOT NULL,
   imagem VARCHAR(255) NULL,
   alternativa_a TEXT NOT NULL,
@@ -38,11 +80,21 @@ CREATE TABLE questoes (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_questoes_usuario (usuario_id),
+  KEY idx_questoes_disciplina (disciplina_id),
+  KEY idx_questoes_assunto (assunto_id),
   KEY idx_questoes_filtros (usuario_id, disciplina, assunto, dificuldade),
   FULLTEXT KEY ft_questoes_busca (pergunta, disciplina, assunto),
   CONSTRAINT fk_questoes_usuario
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_questoes_disciplina
+    FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_questoes_assunto
+    FOREIGN KEY (assunto_id) REFERENCES assuntos(id)
+    ON DELETE RESTRICT
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -82,6 +134,22 @@ CREATE TABLE atividades (
   PRIMARY KEY (id),
   KEY idx_atividades_usuario (usuario_id, created_at DESC),
   CONSTRAINT fk_atividades_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recuperacao_senha (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expira_em DATETIME NOT NULL,
+  usado BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_recuperacao_usuario (usuario_id),
+  KEY idx_recuperacao_token (token_hash),
+  CONSTRAINT fk_recuperacao_usuario
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ON DELETE CASCADE
     ON UPDATE CASCADE

@@ -166,6 +166,10 @@ function parseAndClassifyGeminiError(error: unknown, model: string): GeminiServi
   );
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function requestQuestionsFromGemini(input: GenerateQuestionsRequest): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash-lite";
@@ -179,23 +183,50 @@ export async function requestQuestionsFromGemini(input: GenerateQuestionsRequest
     );
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 60_000 } });
-    const response = await ai.models.generateContent({
-      model,
-      contents: createPrompt(input),
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: questionResponseSchema
-      }
-    });
+  const maxAttempts = 3;
+  let lastError: unknown;
 
-    if (!response.text) throw new Error("AI_INVALID_RESPONSE");
-    return response.text;
-  } catch (error) {
-    if (error instanceof Error && error.message === "AI_INVALID_RESPONSE") throw error;
-    throw parseAndClassifyGeminiError(error, model);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 45_000 } });
+      const response = await ai.models.generateContent({
+        model,
+        contents: createPrompt(input),
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: questionResponseSchema
+        }
+      });
+
+      if (!response.text) throw new Error("AI_INVALID_RESPONSE");
+      return response.text;
+    } catch (error) {
+      if (error instanceof Error && error.message === "AI_INVALID_RESPONSE") {
+        throw error;
+      }
+
+      const classified = parseAndClassifyGeminiError(error, model);
+      lastError = classified;
+
+      const isRetryable =
+        classified.statusCode === 429 ||
+        classified.statusCode === 502 ||
+        classified.statusCode === 503 ||
+        classified.statusCode === 504;
+
+      if (attempt < maxAttempts && isRetryable) {
+        const jitter = Math.floor(Math.random() * 300);
+        const backoffMs = Math.pow(2, attempt) * 1000 + jitter;
+        console.warn(`[Gemini AI] Retry attempt ${attempt}/${maxAttempts - 1} after ${backoffMs}ms due to status ${classified.statusCode}`);
+        await delay(backoffMs);
+        continue;
+      }
+
+      throw classified;
+    }
   }
+
+  throw lastError;
 }
 
 export function parseAndValidateAIQuestions(raw: string, input: GenerateQuestionsRequest): AIQuestion[] {

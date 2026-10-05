@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
@@ -9,12 +9,13 @@ import type { Questao } from "@/types/question";
 
 interface QuestionTableProps {
   data: PaginatedResponse<Questao> | null;
+  onView: (question: Questao) => void;
   onEdit: (question: Questao) => void;
   onDelete: (question: Questao) => void;
   onPageChange: (page: number) => void;
 }
 
-export function QuestionTable({ data, onEdit, onDelete, onPageChange }: QuestionTableProps) {
+export function QuestionTable({ data, onView, onEdit, onDelete, onPageChange }: QuestionTableProps) {
   if (!data || data.items.length === 0) {
     return <EmptyState title="Nenhuma questão encontrada" description="Cadastre uma nova questão ou ajuste os filtros utilizados." />;
   }
@@ -53,10 +54,13 @@ export function QuestionTable({ data, onEdit, onDelete, onPageChange }: Question
                 <td className="px-4 py-4 font-black text-gold-400">{question.correta}</td>
                 <td className="px-4 py-4">
                   <div className="flex justify-end gap-1.5">
-                    <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(question)} aria-label="Editar questão">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => onView(question)} aria-label="Visualizar questão" title="Visualizar questão completa">
+                      <Eye className="h-4 w-4 text-slate-300 hover:text-gold-400" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(question)} aria-label="Editar questão" title="Editar questão">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button type="button" variant="danger" size="icon" onClick={() => onDelete(question)} aria-label="Excluir questão">
+                    <Button type="button" variant="danger" size="icon" onClick={() => onDelete(question)} aria-label="Excluir questão" title="Excluir questão">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

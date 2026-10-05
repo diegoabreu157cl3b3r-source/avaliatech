@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
@@ -17,6 +18,11 @@ function LoginContent() {
   const { toast, showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({ email: "", senha: "" });
+
+  function handleResetForm() {
+    setForm({ email: "", senha: "" });
+    showToast("Campos do formulário limpos.", "info");
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,17 +61,43 @@ function LoginContent() {
             placeholder="professor@email.com"
             required
           />
-          <Input
-            label="Senha"
-            type="password"
-            value={form.senha}
-            onChange={(event) => setForm({ ...form, senha: event.target.value })}
-            placeholder="Digite sua senha"
-            required
-          />
-          <Button className="mt-2 w-full py-3" type="submit" isLoading={isLoading}>
-            Entrar
-          </Button>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Senha <span className="text-rose-400">*</span>
+              </label>
+              <Link
+                href="/recuperar-senha"
+                className="text-xs font-semibold text-gold-400 hover:text-gold-300 hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+            <input
+              className="field"
+              type="password"
+              value={form.senha}
+              onChange={(event) => setForm({ ...form, senha: event.target.value })}
+              placeholder="Digite sua senha"
+              required
+            />
+          </div>
+
+          <div className="pt-2 flex flex-col gap-2.5">
+            <Button className="w-full py-3" type="submit" isLoading={isLoading}>
+              Entrar
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleResetForm}
+              className="w-full gap-2 text-xs text-slate-400 hover:text-slate-200"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Resetar dados do formulário
+            </Button>
+          </div>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-400">

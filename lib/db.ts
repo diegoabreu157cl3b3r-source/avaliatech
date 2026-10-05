@@ -25,7 +25,10 @@ export const db =
     connectionLimit: 10,
     queueLimit: 0,
     namedPlaceholders: true,
-    timezone: "Z"
+    timezone: "Z",
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+    connectTimeout: 10000
   });
 
 if (process.env.NODE_ENV !== "production") {

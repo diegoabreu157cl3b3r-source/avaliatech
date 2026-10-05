@@ -48,17 +48,19 @@ export async function PUT(request: Request) {
       return fail("A logo deve ser PNG, JPG ou JPEG e ter no máximo 2 MB.", 422);
     }
 
-    const currentRows = await query<ProfileRow[]>(
-      "SELECT id, nome, email, senha_hash, logo_base64, logo_mime FROM usuarios WHERE id = :id LIMIT 1",
-      { id: user.id }
-    );
+    const [currentRows, emailExists] = await Promise.all([
+      query<ProfileRow[]>(
+        "SELECT id, nome, email, senha_hash, logo_base64, logo_mime FROM usuarios WHERE id = :id LIMIT 1",
+        { id: user.id }
+      ),
+      query<{ id: number }[]>(
+        "SELECT id FROM usuarios WHERE email = :email AND id <> :id LIMIT 1",
+        { email, id: user.id }
+      )
+    ]);
+
     const current = currentRows[0];
     if (!current) return fail("Perfil não encontrado.", 404);
-
-    const emailExists = await query<{ id: number }[]>(
-      "SELECT id FROM usuarios WHERE email = :email AND id <> :id LIMIT 1",
-      { email, id: user.id }
-    );
     if (emailExists.length > 0) return fail("Este e-mail já está sendo usado por outro usuário.", 409);
 
     const shouldChangePassword = Boolean(parsed.data.senhaAtual || parsed.data.novaSenha);

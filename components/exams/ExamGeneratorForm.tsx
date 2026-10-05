@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Download, ImagePlus, Plus, X, Sparkles, Sliders, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Combobox } from "@/components/ui/Combobox";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SuggestionInput } from "@/components/ui/SuggestionInput";
@@ -11,8 +12,10 @@ import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { DIFICULDADES, QUANTIDADES_PROVA } from "@/lib/constants";
 import { calculateAutoDistribution } from "@/lib/exam";
+import { getDisciplines } from "@/services/discipline-service";
 import { generateExamPdf, getExamDetails } from "@/services/exam-service";
 import { getProfile } from "@/services/profile-service";
+import type { DisciplinaWithAssuntos } from "@/types/discipline";
 import type { DistribuicaoDificuldade, GenerateExamRequest, ModoDificuldade } from "@/types/exam";
 
 const today = new Date().toISOString().slice(0, 10);
@@ -46,19 +49,29 @@ export function ExamGeneratorForm() {
   });
   const [subjectDraft, setSubjectDraft] = useState("");
 
-  // Carrega dados do perfil e duplicação se houver
+  const [disciplines, setDisciplines] = useState<DisciplinaWithAssuntos[]>([]);
+
+  // Carrega dados do perfil, disciplinas e duplicação se houver
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const profileRes = await getProfile();
-        if (profileRes.data) {
+        const [profileRes, discRes] = await Promise.allSettled([
+          getProfile(),
+          getDisciplines()
+        ]);
+
+        if (discRes.status === "fulfilled" && discRes.value.data) {
+          setDisciplines(discRes.value.data);
+        }
+
+        if (profileRes.status === "fulfilled" && profileRes.value.data) {
           setForm((current) => ({
             ...current,
-            professor: current.professor || profileRes.data?.nome || "",
-            logoBase64: current.logoBase64 || profileRes.data?.logo_base64 || null,
-            logoMime: current.logoMime || (profileRes.data?.logo_mime as "image/png" | "image/jpeg" | null) || null
+            professor: current.professor || profileRes.value.data?.nome || "",
+            logoBase64: current.logoBase64 || profileRes.value.data?.logo_base64 || null,
+            logoMime: current.logoMime || (profileRes.value.data?.logo_mime as "image/png" | "image/jpeg" | null) || null
           }));
-          if (profileRes.data.logo_base64) setLogoPreview(profileRes.data.logo_base64);
+          if (profileRes.value.data.logo_base64) setLogoPreview(profileRes.value.data.logo_base64);
         }
 
         if (duplicateId) {
@@ -221,13 +234,19 @@ export function ExamGeneratorForm() {
               onChange={(event) => update("professor", event.target.value)}
               required
             />
-            <SuggestionInput
+            <Combobox
               label="Disciplina"
-              type="discipline"
               value={form.disciplina}
               onChange={updateDiscipline}
-              onSelect={updateDiscipline}
-              placeholder="Digite para buscar disciplinas"
+              options={disciplines.map((d) => ({
+                label: d.nome,
+                value: d.nome,
+                count: d.total_questoes
+              }))}
+              placeholder="Selecione a disciplina"
+              searchPlaceholder="Buscar disciplina..."
+              emptyMessage="Nenhuma disciplina cadastrada."
+              required
             />
             <Input
               label="Data da prova"
@@ -280,6 +299,64 @@ export function ExamGeneratorForm() {
             )}
           </div>
 
+          {/* Sugestões rápidas de assuntos da disciplina cadastrada */}
+          {(() => {
+            const currentDisc = disciplines.find(
+              (d) => d.nome.toLowerCase() === form.disciplina.toLowerCase()
+            );
+            const discSubjects = currentDisc?.assuntos ?? [];
+            if (!discSubjects.length) return null;
+
+            return (
+              <div className="rounded-xl border border-navy-800 bg-navy-950/40 p-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Assuntos cadastrados nesta disciplina:
+                  </span>
+                  {discSubjects.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allNames = discSubjects.map((s) => s.nome);
+                        update("assuntos", Array.from(new Set([...form.assuntos, ...allNames])));
+                      }}
+                      className="text-[11px] font-semibold text-gold-400 hover:underline"
+                    >
+                      + Selecionar todos
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {discSubjects.map((subj) => {
+                    const isSelected = form.assuntos.includes(subj.nome);
+                    return (
+                      <button
+                        key={subj.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) removeSubject(subj.nome);
+                          else addSubject(subj.nome);
+                        }}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                          isSelected
+                            ? "bg-gold-500/20 text-gold-400 border border-gold-500/40 shadow-xs"
+                            : "bg-navy-850 text-slate-300 border border-navy-700 hover:border-navy-600 hover:text-slate-100"
+                        }`}
+                      >
+                        <span>{subj.nome}</span>
+                        {isSelected ? (
+                          <CheckCircle2 className="h-3 w-3 text-gold-400" />
+                        ) : (
+                          <Plus className="h-3 w-3 text-slate-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {form.assuntos.length > 0 && (
             <div className="flex flex-wrap gap-1.5 py-1">
               {form.assuntos.map((assunto) => (
@@ -302,7 +379,7 @@ export function ExamGeneratorForm() {
           )}
 
           <SuggestionInput
-            label="Adicionar assunto"
+            label="Adicionar outro assunto manualmente"
             type="subject"
             value={subjectDraft}
             onChange={setSubjectDraft}
@@ -311,7 +388,7 @@ export function ExamGeneratorForm() {
             disabled={!form.disciplina}
             placeholder={
               form.disciplina
-                ? "Digite para buscar assuntos"
+                ? "Digite para buscar ou adicionar outros assuntos"
                 : "Escolha uma disciplina primeiro"
             }
           />

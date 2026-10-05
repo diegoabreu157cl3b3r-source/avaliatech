@@ -2,6 +2,7 @@ import type { ResultSetHeader } from "mysql2";
 import type { ExecuteValues } from "mysql2";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { invalidateDashboardCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activity";
 import { questionSchema } from "@/lib/validators";
 import { cleanOptionalText, cleanText } from "@/lib/sanitizers";
@@ -52,19 +53,21 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
     const { where, params } = buildFilters(searchParams, user.id);
 
-    const countRows = await query<{ total: number }[]>(
-      `SELECT COUNT(*) AS total FROM questoes WHERE ${where}`,
-      params
-    );
-
-    const rows = await query<Questao[]>(
-      `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta, disciplina, assunto, dificuldade, created_at, updated_at
-       FROM questoes
-       WHERE ${where}
-       ORDER BY created_at DESC
-       LIMIT :limit OFFSET :offset`,
-      { ...params, limit, offset }
-    );
+    // Parallelize count and data fetch
+    const [countRows, rows] = await Promise.all([
+      query<{ total: number }[]>(
+        `SELECT COUNT(*) AS total FROM questoes WHERE ${where}`,
+        params
+      ),
+      query<Questao[]>(
+        `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta, disciplina, assunto, dificuldade, created_at, updated_at
+         FROM questoes
+         WHERE ${where}
+         ORDER BY created_at DESC
+         LIMIT :limit OFFSET :offset`,
+        { ...params, limit, offset }
+      )
+    ]);
 
     const total = countRows[0]?.total ?? 0;
 
@@ -117,6 +120,7 @@ export async function POST(request: Request) {
       { usuarioId: user.id, ...data }
     );
 
+    invalidateDashboardCache(user.id);
     await logActivity(user.id, "questao_criada", `Nova questão em ${data.disciplina}`, `Assunto: ${data.assunto} · ${data.dificuldade}`);
 
     return ok({ id: result.insertId, ...data }, "Questão cadastrada com sucesso.", 201);

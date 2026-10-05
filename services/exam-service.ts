@@ -37,7 +37,7 @@ export async function downloadHistoricalExamPdf(id: number): Promise<Blob> {
   return response.blob();
 }
 
-export function getExams(filters: ExamFilters = {}) {
+export function getExams(filters: ExamFilters = {}, signal?: AbortSignal) {
   const params = new URLSearchParams();
   if (filters.page) params.set("page", String(filters.page));
   if (filters.limit) params.set("limit", String(filters.limit));
@@ -49,7 +49,7 @@ export function getExams(filters: ExamFilters = {}) {
   if (filters.periodo && filters.periodo !== "todos") params.set("periodo", filters.periodo);
 
   const query = params.toString();
-  return http<ApiResponse<PaginatedResponse<Prova>>>(`/api/exams${query ? `?${query}` : ""}`);
+  return http<ApiResponse<PaginatedResponse<Prova>>>(`/api/exams${query ? `?${query}` : ""}`, { signal });
 }
 
 export function getExamDetails(id: number) {
@@ -62,4 +62,9 @@ export function deleteExam(id: number) {
   });
 }
 
-
+export function sendExamByEmail(id: number, email: string) {
+  return http<ApiResponse<null>>(`/api/exams/${id}/send-email`, {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+}

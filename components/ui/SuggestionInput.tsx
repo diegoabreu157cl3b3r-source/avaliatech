@@ -97,11 +97,12 @@ export function SuggestionInput({ label, type, value, onChange, onSelect, discip
           autoComplete="off"
           role="combobox"
           aria-expanded={showResults}
+          aria-controls={showResults ? "suggestion-listbox" : undefined}
           aria-autocomplete="list"
         />
       </label>
       {showResults && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-navy-700 bg-navy-900 py-1 shadow-2xl" role="listbox">
+        <div id="suggestion-listbox" className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-navy-700 bg-navy-900 py-1 shadow-2xl" role="listbox">
           {isLoading ? (
             <p className="px-3 py-2 text-sm text-slate-400">Buscando sugestões...</p>
           ) : items.length > 0 ? (

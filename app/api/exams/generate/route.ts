@@ -1,10 +1,11 @@
 import type { ResultSetHeader } from "mysql2";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { invalidateDashboardCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activity";
 import { generateExamSchema } from "@/lib/validators";
 import { cleanText } from "@/lib/sanitizers";
-import { buildExamVersions, calculateAutoDistribution, selectQuestionsByDistribution, selectRandomQuestions } from "@/lib/exam";
+import { buildExamVersions, calculateAutoDistribution, shuffleArray } from "@/lib/exam";
 import { createExamPdf } from "@/lib/pdf";
 import { fail, handleApiError, validationFail } from "@/lib/response";
 import { isValidLogo } from "@/lib/upload";
@@ -62,14 +63,14 @@ export async function POST(request: Request) {
       return fail("Um ou mais assuntos não pertencem à disciplina selecionada.", 422);
     }
 
-    let selectedQuestions: Questao[] = [];
+    let selectedIds: number[] = [];
     let dificuldadeArmazenada = data.dificuldade;
     let distribuicaoUtilizada: DistribuicaoDificuldade | null = null;
 
     if (modoDificuldade === "unica") {
-      const compatibleQuestions = await query<Questao[]>(
-        `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta,
-                disciplina, assunto, dificuldade, created_at, updated_at
+      // Fetch only IDs for fast lightweight sampling
+      const compatibleRows = await query<{ id: number }[]>(
+        `SELECT id
          FROM questoes
          WHERE usuario_id = :usuarioId
            AND disciplina = :disciplina
@@ -83,14 +84,14 @@ export async function POST(request: Request) {
         }
       );
 
-      if (compatibleQuestions.length < data.quantidadeQuestoes) {
+      if (compatibleRows.length < data.quantidadeQuestoes) {
         return fail(
-          `Não existem questões suficientes para gerar esta prova. Foram encontradas ${compatibleQuestions.length} questões (${data.dificuldade}), mas são necessárias ${data.quantidadeQuestoes}.`,
+          `Não existem questões suficientes para gerar esta prova. Foram encontradas ${compatibleRows.length} questões (${data.dificuldade}), mas são necessárias ${data.quantidadeQuestoes}.`,
           422
         );
       }
 
-      selectedQuestions = selectRandomQuestions(compatibleQuestions, data.quantidadeQuestoes);
+      selectedIds = shuffleArray(compatibleRows.map((r) => r.id)).slice(0, data.quantidadeQuestoes);
       dificuldadeArmazenada = data.dificuldade;
     } else {
       // Distribuição Inteligente (Automática ou Personalizada)
@@ -102,9 +103,9 @@ export async function POST(request: Request) {
       distribuicaoUtilizada = targetDistribution;
       dificuldadeArmazenada = modoDificuldade === "automatica" ? "Balanceada" : "Personalizada";
 
-      const allCompatible = await query<Questao[]>(
-        `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta,
-                disciplina, assunto, dificuldade, created_at, updated_at
+      // Fetch only IDs and difficulty for fast lightweight distribution check
+      const allCompatible = await query<{ id: number; dificuldade: "Fácil" | "Média" | "Difícil" }[]>(
+        `SELECT id, dificuldade
          FROM questoes
          WHERE usuario_id = :usuarioId
            AND disciplina = :disciplina
@@ -116,19 +117,19 @@ export async function POST(request: Request) {
         }
       );
 
-      const easy = allCompatible.filter((q) => q.dificuldade === "Fácil");
-      const medium = allCompatible.filter((q) => q.dificuldade === "Média");
-      const hard = allCompatible.filter((q) => q.dificuldade === "Difícil");
+      const easyIds = allCompatible.filter((q) => q.dificuldade === "Fácil").map((q) => q.id);
+      const mediumIds = allCompatible.filter((q) => q.dificuldade === "Média").map((q) => q.id);
+      const hardIds = allCompatible.filter((q) => q.dificuldade === "Difícil").map((q) => q.id);
 
       const shortages: string[] = [];
-      if (easy.length < targetDistribution.facil) {
-        shortages.push(`Fácil: ${easy.length} disponíveis (necessárias: ${targetDistribution.facil})`);
+      if (easyIds.length < targetDistribution.facil) {
+        shortages.push(`Fácil: ${easyIds.length} disponíveis (necessárias: ${targetDistribution.facil})`);
       }
-      if (medium.length < targetDistribution.media) {
-        shortages.push(`Média: ${medium.length} disponíveis (necessárias: ${targetDistribution.media})`);
+      if (mediumIds.length < targetDistribution.media) {
+        shortages.push(`Média: ${mediumIds.length} disponíveis (necessárias: ${targetDistribution.media})`);
       }
-      if (hard.length < targetDistribution.dificil) {
-        shortages.push(`Difícil: ${hard.length} disponíveis (necessárias: ${targetDistribution.dificil})`);
+      if (hardIds.length < targetDistribution.dificil) {
+        shortages.push(`Difícil: ${hardIds.length} disponíveis (necessárias: ${targetDistribution.dificil})`);
       }
 
       if (shortages.length > 0) {
@@ -138,8 +139,30 @@ export async function POST(request: Request) {
         );
       }
 
-      selectedQuestions = selectQuestionsByDistribution(allCompatible, targetDistribution);
+      const pickedEasy = shuffleArray(easyIds).slice(0, targetDistribution.facil);
+      const pickedMedium = shuffleArray(mediumIds).slice(0, targetDistribution.media);
+      const pickedHard = shuffleArray(hardIds).slice(0, targetDistribution.dificil);
+
+      selectedIds = shuffleArray([...pickedEasy, ...pickedMedium, ...pickedHard]);
     }
+
+    // Now fetch full question records ONLY for the selected questions
+    const idPlaceholders = selectedIds.map((_, index) => `:qid${index}`).join(", ");
+    const idParams = Object.fromEntries(selectedIds.map((id, index) => [`qid${index}`, id]));
+
+    const fullQuestions = await query<Questao[]>(
+      `SELECT id, usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta,
+              disciplina, assunto, dificuldade, created_at, updated_at
+       FROM questoes
+       WHERE id IN (${idPlaceholders})`,
+      idParams
+    );
+
+    // Maintain the randomly chosen order
+    const questionMap = new Map(fullQuestions.map((q) => [q.id, q]));
+    const selectedQuestions = selectedIds
+      .map((id) => questionMap.get(id))
+      .filter((q): q is Questao => Boolean(q));
 
     const { versionA, versionB } = buildExamVersions(selectedQuestions);
     const dadosJson = JSON.stringify({
@@ -190,6 +213,8 @@ export async function POST(request: Request) {
         throw insertError;
       }
     }
+
+    invalidateDashboardCache(user.id);
 
     await logActivity(
       user.id,

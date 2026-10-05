@@ -1,3 +1,4 @@
+import type { ExecuteValues } from "mysql2";
 import { query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { fail, handleApiError, ok } from "@/lib/response";
@@ -21,8 +22,7 @@ export async function GET(request: Request) {
     const periodo = searchParams.get("periodo")?.trim() || "";
 
     const whereClauses: string[] = ["usuario_id = :usuarioId"];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const params: Record<string, any> = { usuarioId: user.id };
+    const params: Record<string, ExecuteValues> = { usuarioId: user.id };
 
     if (search) {
       whereClauses.push(
@@ -61,20 +61,21 @@ export async function GET(request: Request) {
 
     const whereSql = whereClauses.join(" AND ");
 
-    const countRows = await query<{ total: number }[]>(
-      `SELECT COUNT(*) AS total FROM provas WHERE ${whereSql}`,
-      params
-    );
-
-    const rows = await query<Prova[]>(
-      `SELECT id, usuario_id, escola, professor, disciplina, assunto, dificuldade,
-              quantidade_questoes, versao, data_prova, valor_avaliacao, data_geracao, created_at
-       FROM provas
-       WHERE ${whereSql}
-       ORDER BY created_at DESC
-       LIMIT :limit OFFSET :offset`,
-      { ...params, limit, offset }
-    );
+    const [countRows, rows] = await Promise.all([
+      query<{ total: number }[]>(
+        `SELECT COUNT(*) AS total FROM provas WHERE ${whereSql}`,
+        params
+      ),
+      query<Prova[]>(
+        `SELECT id, usuario_id, escola, professor, disciplina, assunto, dificuldade,
+                quantidade_questoes, versao, data_prova, valor_avaliacao, data_geracao, created_at
+         FROM provas
+         WHERE ${whereSql}
+         ORDER BY created_at DESC
+         LIMIT :limit OFFSET :offset`,
+        { ...params, limit, offset }
+      )
+    ]);
 
     const total = countRows[0]?.total ?? 0;
 

@@ -12,9 +12,9 @@ function buildQuery(filters: QuestaoFilters) {
   return params.toString();
 }
 
-export function listQuestions(filters: QuestaoFilters = {}) {
+export function listQuestions(filters: QuestaoFilters = {}, signal?: AbortSignal) {
   const query = buildQuery(filters);
-  return http<ApiResponse<PaginatedResponse<Questao>>>(`/api/questions${query ? `?${query}` : ""}`);
+  return http<ApiResponse<PaginatedResponse<Questao>>>(`/api/questions${query ? `?${query}` : ""}`, { signal });
 }
 
 export function createQuestion(data: QuestaoFormData) {
