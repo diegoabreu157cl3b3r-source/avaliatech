@@ -298,7 +298,7 @@ export default function DashboardPage() {
                 href="/provas"
                 className="text-[11px] font-semibold text-gold-400 hover:text-gold-300 transition"
               >
-                Ver histórico &rarr;
+                Ver provas geradas &rarr;
               </Link>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">

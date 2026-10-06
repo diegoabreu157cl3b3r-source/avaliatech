@@ -60,7 +60,7 @@ export function ProductMockup() {
               </div>
               <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-slate-400 hover:bg-navy-850/50">
                 <History className="h-3 w-3" />
-                Histórico
+                Provas Geradas
               </div>
               <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-slate-400 hover:bg-navy-850/50">
                 <User className="h-3 w-3" />

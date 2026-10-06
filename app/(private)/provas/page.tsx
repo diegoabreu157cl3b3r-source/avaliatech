@@ -509,7 +509,7 @@ export default function ProvasPage() {
         isOpen={Boolean(deletingExam)}
         onClose={() => setDeletingExam(null)}
         title="Excluir Prova"
-        description="Esta ação removerá o registro desta prova do histórico."
+        description="Esta ação removerá o registro desta prova das provas geradas."
       >
         <div className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">

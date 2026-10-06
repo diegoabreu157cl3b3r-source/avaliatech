@@ -18,7 +18,8 @@ export async function GET() {
               COUNT(DISTINCT q.id) AS total_questoes
        FROM disciplinas d
        LEFT JOIN assuntos a ON a.disciplina_id = d.id AND a.usuario_id = d.usuario_id
-       LEFT JOIN questoes q ON (q.disciplina_id = d.id OR (q.disciplina = d.nome AND q.usuario_id = d.usuario_id))
+       LEFT JOIN questoes q ON q.usuario_id = d.usuario_id
+         AND (q.disciplina_id = d.id OR (q.disciplina_id IS NULL AND q.disciplina = d.nome))
        WHERE d.usuario_id = :usuarioId
        GROUP BY d.id
        ORDER BY d.nome ASC`,
@@ -28,11 +29,18 @@ export async function GET() {
     // 2. Buscar todos os assuntos do usuário
     const subjects = await query<Assunto[]>(
       `SELECT a.id, a.disciplina_id, a.usuario_id, a.nome, a.created_at, a.updated_at,
-              COUNT(q.id) AS total_questoes
+              (SELECT COUNT(DISTINCT q.id)
+               FROM questoes q
+               WHERE q.usuario_id = a.usuario_id
+                 AND (q.assunto_id = a.id OR (
+                   q.assunto_id IS NULL AND q.assunto = a.nome
+                   AND (q.disciplina_id = a.disciplina_id OR (
+                     q.disciplina_id IS NULL AND q.disciplina = d.nome
+                   ))
+                 ))) AS total_questoes
        FROM assuntos a
-       LEFT JOIN questoes q ON (q.assunto_id = a.id OR (q.assunto = a.nome AND q.disciplina_id = a.disciplina_id AND q.usuario_id = a.usuario_id))
+       INNER JOIN disciplinas d ON d.id = a.disciplina_id AND d.usuario_id = a.usuario_id
        WHERE a.usuario_id = :usuarioId
-       GROUP BY a.id
        ORDER BY a.nome ASC`,
       { usuarioId: user.id }
     );

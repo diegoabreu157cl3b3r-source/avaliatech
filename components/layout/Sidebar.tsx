@@ -28,7 +28,7 @@ const navigationSections = [
       { href: "/disciplinas", label: "Disciplinas", icon: BookOpen },
       { href: "/questoes", label: "Questões", icon: FileText, highlight: true },
       { href: "/gerar-prova", label: "Gerar Prova", icon: BarChart3 },
-      { href: "/provas", label: "Histórico", icon: History }
+      { href: "/provas", label: "Provas Geradas", icon: History }
     ]
   },
   {

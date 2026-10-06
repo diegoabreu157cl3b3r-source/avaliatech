@@ -1,4 +1,5 @@
 import { http } from "@/services/http";
+import { invalidateDisciplinesCache } from "@/services/discipline-service";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import type { GenerateQuestionsRequest, GenerateQuestionsResponse, Questao, QuestaoFilters, QuestaoFormData } from "@/types/question";
 
@@ -17,11 +18,13 @@ export function listQuestions(filters: QuestaoFilters = {}, signal?: AbortSignal
   return http<ApiResponse<PaginatedResponse<Questao>>>(`/api/questions${query ? `?${query}` : ""}`, { signal });
 }
 
-export function createQuestion(data: QuestaoFormData) {
-  return http<ApiResponse<Questao>>("/api/questions", {
+export async function createQuestion(data: QuestaoFormData) {
+  const response = await http<ApiResponse<Questao>>("/api/questions", {
     method: "POST",
     body: JSON.stringify(data)
   });
+  invalidateDisciplinesCache();
+  return response;
 }
 
 export function generateQuestionsWithAI(data: GenerateQuestionsRequest) {
@@ -31,15 +34,19 @@ export function generateQuestionsWithAI(data: GenerateQuestionsRequest) {
   });
 }
 
-export function updateQuestion(id: number, data: QuestaoFormData) {
-  return http<ApiResponse<Questao>>(`/api/questions/${id}`, {
+export async function updateQuestion(id: number, data: QuestaoFormData) {
+  const response = await http<ApiResponse<Questao>>(`/api/questions/${id}`, {
     method: "PUT",
     body: JSON.stringify(data)
   });
+  invalidateDisciplinesCache();
+  return response;
 }
 
-export function deleteQuestion(id: number) {
-  return http<ApiResponse<null>>(`/api/questions/${id}`, { method: "DELETE" });
+export async function deleteQuestion(id: number) {
+  const response = await http<ApiResponse<null>>(`/api/questions/${id}`, { method: "DELETE" });
+  invalidateDisciplinesCache();
+  return response;
 }
 
 export interface DifficultyAvailability {

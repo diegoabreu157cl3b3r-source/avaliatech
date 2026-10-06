@@ -84,7 +84,7 @@ export function ClassroomValueSection() {
               <div className="rounded-xl border border-navy-750 bg-navy-900 p-3.5">
                 <p className="font-bold text-slate-100 text-xs sm:text-sm">Organização por anos</p>
                 <p className="mt-1 text-xs text-slate-400 leading-relaxed">
-                  Seu acervo de questões e histórico de provas permanecem organizados para uso contínuo em novos anos letivos.
+                  Seu acervo de questões e provas geradas permanecem organizados para uso contínuo em novos anos letivos.
                 </p>
               </div>
             </div>

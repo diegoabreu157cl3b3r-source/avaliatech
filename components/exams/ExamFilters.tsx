@@ -90,7 +90,7 @@ export function ExamFilters({ filters, onChange, onReset }: ExamFiltersProps) {
           value={filters.periodo || "todos"}
           onChange={(e) => onChange({ periodo: e.target.value as "todos" | "7d" | "30d" | "90d", page: 1 })}
           options={[
-            { label: "Todo o histórico", value: "todos" },
+            { label: "Todas as provas geradas", value: "todos" },
             { label: "Últimos 7 dias", value: "7d" },
             { label: "Últimos 30 dias", value: "30d" },
             { label: "Últimos 90 dias", value: "90d" }

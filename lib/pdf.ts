@@ -1,4 +1,7 @@
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import sharp from "sharp";
 import type { GenerateExamRequest, QuestaoDaProva, VersaoProva } from "@/types/exam";
 import { parseDataUrl } from "@/lib/upload";
@@ -17,6 +20,20 @@ const LAYOUT = {
   imageMaxWidth: 135, imageMaxHeight: 90, imageHorizontalPadding: 8,
 };
 const TEXT_COLOR = rgb(.1, .12, .16);
+
+async function embedUnicodeFonts(pdfDoc: PDFDocument) {
+  pdfDoc.registerFontkit(fontkit);
+  const fontDirectory = path.join(process.cwd(), "public", "fonts");
+  const [regularBytes, boldBytes] = await Promise.all([
+    readFile(path.join(fontDirectory, "DejaVuSans.ttf")),
+    readFile(path.join(fontDirectory, "DejaVuSans-Bold.ttf"))
+  ]);
+  const [regular, bold] = await Promise.all([
+    pdfDoc.embedFont(regularBytes),
+    pdfDoc.embedFont(boldBytes)
+  ]);
+  return { regular, bold };
+}
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
   const words = text.replace(/\s+/g, " ").trim().split(" "); const lines: string[] = []; let current = "";
@@ -123,8 +140,8 @@ export async function drawHeader(
   fonts?: { regular: PDFFont; bold: PDFFont },
   preloadedLogo?: PDFImage | null
 ) {
-  const regular = fonts?.regular ?? (await pdfDoc.embedFont(StandardFonts.Helvetica));
-  const bold = fonts?.bold ?? (await pdfDoc.embedFont(StandardFonts.HelveticaBold));
+  const embeddedFonts = fonts ?? await embedUnicodeFonts(pdfDoc);
+  const { regular, bold } = embeddedFonts;
   const top = PAGE.height - LAYOUT.margin;
   const boxHeight = 90;
   const boxWidth = PAGE.width - LAYOUT.margin * 2;
@@ -242,8 +259,8 @@ export async function drawSubsequentHeader(
   totalPages: number,
   fonts?: { regular: PDFFont; bold: PDFFont }
 ) {
-  const regular = fonts?.regular ?? (await pdfDoc.embedFont(StandardFonts.Helvetica));
-  const bold = fonts?.bold ?? (await pdfDoc.embedFont(StandardFonts.HelveticaBold));
+  const embeddedFonts = fonts ?? await embedUnicodeFonts(pdfDoc);
+  const { regular, bold } = embeddedFonts;
   const top = PAGE.height - LAYOUT.margin;
 
   page.drawText(`AvaliaTech — Prova Versão ${version}`, {
@@ -441,9 +458,7 @@ export async function createExamPdf(header: GenerateExamRequest, versionA: Versa
   pdfDoc.setTitle(`Avaliação ${header.disciplina}`);
   pdfDoc.setAuthor("AvaliaTech");
 
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const fonts = { regular, bold };
+  const fonts = await embedUnicodeFonts(pdfDoc);
 
   let logoImage: PDFImage | null = null;
   if (header.logoBase64) {
