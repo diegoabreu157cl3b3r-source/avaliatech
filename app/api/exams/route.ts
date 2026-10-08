@@ -72,8 +72,8 @@ export async function GET(request: Request) {
        FROM provas
        WHERE ${whereSql}
        ORDER BY created_at DESC
-       LIMIT :limit OFFSET :offset`,
-      { ...params, limit, offset }
+       LIMIT ${limit} OFFSET ${offset}`,
+params
     );
 
     const total = countRows[0]?.total ?? 0;
