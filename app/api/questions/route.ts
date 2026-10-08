@@ -64,8 +64,8 @@ export async function GET(request: Request) {
          FROM questoes
          WHERE ${where}
          ORDER BY created_at DESC
-         LIMIT :limit OFFSET :offset`,
-        { ...params, limit, offset }
+         LIMIT ${limit} OFFSET ${offset}`,
+params
       )
     ]);
 
