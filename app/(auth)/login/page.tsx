@@ -63,17 +63,9 @@ function LoginContent() {
           />
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Senha <span className="text-rose-400">*</span>
-              </label>
-              <Link
-                href="/recuperar-senha"
-                className="text-xs font-semibold text-gold-400 hover:text-gold-300 hover:underline"
-              >
-                Esqueci minha senha
-              </Link>
-            </div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+              Senha <span className="text-rose-400">*</span>
+            </label>
             <input
               className="field"
               type="password"
@@ -82,6 +74,14 @@ function LoginContent() {
               placeholder="Digite sua senha"
               required
             />
+            <div className="mt-1.5 flex justify-end">
+              <Link
+                href="/recuperar-senha"
+                className="text-xs font-semibold text-gold-400 hover:text-gold-300 hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
           </div>
 
           <div className="pt-2 flex flex-col gap-2.5">
