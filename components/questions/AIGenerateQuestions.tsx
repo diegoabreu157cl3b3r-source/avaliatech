@@ -1,7 +1,9 @@
+
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Check, Sparkles, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, BookOpen, Check, ExternalLink, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Combobox } from "@/components/ui/Combobox";
 import { Select } from "@/components/ui/Select";
@@ -29,6 +31,7 @@ const initialForm: GenerateQuestionsRequest = {
 export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQuestionsProps) {
   const [form, setForm] = useState(initialForm);
   const [disciplines, setDisciplines] = useState<DisciplinaWithAssuntos[]>([]);
+  const [isLoadingDisciplines, setIsLoadingDisciplines] = useState(true);
   const [questions, setQuestions] = useState<AIQuestion[]>([]);
   const [saved, setSaved] = useState<Set<number>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -42,6 +45,8 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
         if (res.data) setDisciplines(res.data);
       } catch (err) {
         console.error("Erro ao carregar disciplinas na IA:", err);
+      } finally {
+        setIsLoadingDisciplines(false);
       }
     }
     loadDisciplines();
@@ -62,6 +67,12 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
 
   async function generate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (disciplines.length === 0) {
+      notify("Cadastre uma disciplina antes de gerar questões com IA.", "error");
+      return;
+    }
+
     if (!form.disciplina.trim()) {
       notify("Selecione uma disciplina.", "error");
       return;
@@ -245,6 +256,30 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
         As questões serão geradas por inteligência artificial para sua revisão e não serão salvas automaticamente.
       </p>
 
+      {!isLoadingDisciplines && disciplines.length === 0 && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-amber-300">
+              Cadastre uma disciplina primeiro
+            </p>
+            <p className="mt-1 text-sm text-slate-300">
+              Antes de gerar questões com IA, você precisa cadastrar uma disciplina e pelo menos um assunto.
+            </p>
+
+            <Link
+              href="/disciplinas"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-gold-400 hover:underline"
+            >
+              <BookOpen className="h-4 w-4" />
+              Cadastrar disciplina e assunto
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Combobox
           label="Disciplina"
@@ -321,7 +356,12 @@ export function AIGenerateQuestions({ onSaved, onClose, notify }: AIGenerateQues
         <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
           Cancelar
         </Button>
-        <Button type="submit" isLoading={isGenerating} className="gap-2">
+        <Button
+          type="submit"
+          isLoading={isGenerating}
+          disabled={isLoadingDisciplines || disciplines.length === 0}
+          className="gap-2"
+        >
           <Sparkles className="h-4 w-4 text-gold-400" />
           Gerar questões com IA
         </Button>
