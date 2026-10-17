@@ -184,3 +184,73 @@ export async function sendExamPdfEmail({
   return { success: true, simulated: false };
 }
 
+interface SendVerificationCodeParams {
+  to: string;
+  name: string;
+  code: string;
+}
+
+export async function sendEmailVerificationCode({
+  to,
+  name,
+  code
+}: SendVerificationCodeParams) {
+  const transporter = getMailTransporter();
+
+  if (!transporter) {
+    throw new Error(
+      "Envio de e-mail indisponível: configure o SMTP."
+    );
+  }
+
+  const safeName = name
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      </head>
+      <body style="margin:0;padding:24px;background:#07131C;font-family:Arial,sans-serif;color:#F8FAFC">
+        <div style="max-width:480px;margin:auto;padding:28px;background:#0D1B26;border:1px solid #1A3042;border-radius:16px">
+          <h1 style="color:#F5B82E;text-align:center">AvaliaTech</h1>
+          <h2>Confirme seu e-mail</h2>
+          <p>Olá, ${safeName}!</p>
+          <p>Utilize o código abaixo para confirmar seu endereço de e-mail:</p>
+          <div style="margin:28px 0;padding:20px;background:#112433;border-radius:12px;text-align:center">
+            <span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#F5B82E">${code}</span>
+          </div>
+          <p>Este código expira em <strong>10 minutos</strong>.</p>
+          <p>Se você não iniciou esse cadastro, ignore esta mensagem.</p>
+          <hr style="border:0;border-top:1px solid #1A3042">
+          <p style="font-size:12px;color:#94A3B8;text-align:center">
+            © ${new Date().getFullYear()} AvaliaTech
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text =
+    `Olá, ${name}!\n\n` +
+    `Seu código de confirmação do AvaliaTech é: ${code}\n\n` +
+    `Ele expira em 10 minutos. ` +
+    `Se você não iniciou esse cadastro, ignore esta mensagem.`;
+
+  await transporter.sendMail({
+    from: defaultFrom,
+    to,
+    subject: "Confirme seu e-mail | AvaliaTech",
+    text,
+    html
+  });
+
+  return { success: true };
+}
+
