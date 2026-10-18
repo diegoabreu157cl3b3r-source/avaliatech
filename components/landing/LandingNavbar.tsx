@@ -58,6 +58,12 @@ export function LandingNavbar() {
             >
               Sobre
             </Link>
+            <Link href="/sobre-nos" className="text-sm font-medium text-slate-400 hover:text-slate-100 transition">
+              Sobre nós
+            </Link>
+            <Link href="/fale-conosco" className="text-sm font-medium text-slate-400 hover:text-slate-100 transition">
+              Contato
+            </Link>
           </nav>
 
           {/* Desktop Auth CTAs */}
@@ -122,6 +128,21 @@ export function LandingNavbar() {
               className="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-navy-850 hover:text-gold-400 transition"
             >
               Sobre
+            </Link>
+
+            <Link
+              href="/sobre-nos"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-navy-850 hover:text-gold-400 transition"
+            >
+              Sobre nós
+            </Link>
+            <Link
+              href="/fale-conosco"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-navy-850 hover:text-gold-400 transition"
+            >
+              Fale conosco
             </Link>
 
             <div className="pt-3 border-t border-navy-700 flex flex-col gap-2.5">

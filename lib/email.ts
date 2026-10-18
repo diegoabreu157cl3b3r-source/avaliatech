@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 
+type MailResult = { success: true; simulated: boolean };
+
 interface SendPasswordResetEmailParams {
   to: string;
   name: string;
@@ -15,6 +17,20 @@ interface SendExamPdfEmailParams {
   filename: string;
 }
 
+interface SendVerificationCodeParams {
+  to: string;
+  name: string;
+  code: string;
+}
+
+interface SendContactEmailParams {
+  name: string;
+  email: string;
+  subject?: string;
+  category?: string;
+  message: string;
+}
+
 function getMailTransporter() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
@@ -22,86 +38,74 @@ function getMailTransporter() {
   const pass = process.env.SMTP_PASSWORD;
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
-  if (!host || !user || !pass) {
-    return null;
-  }
+  if (!host || !user || !pass) return null;
 
   return nodemailer.createTransport({
     host,
     port,
     secure,
-    auth: {
-      user,
-      pass
-    }
+    auth: { user, pass },
   });
 }
 
-const defaultFrom = process.env.SMTP_FROM || "AvaliaTech <noreply@avaliatech.com>";
+const defaultFrom =
+  process.env.SMTP_FROM || "AvaliaTech <noreply@avaliatech.com>";
 
-export async function sendPasswordResetEmail({ to, name, resetUrl }: SendPasswordResetEmailParams) {
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function sendOrSimulate(options: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  attachments?: Array<{ filename: string; content: Buffer; contentType: string }>;
+}): Promise<MailResult> {
   const transporter = getMailTransporter();
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #07131C; color: #F8FAFC; margin: 0; padding: 24px; }
-          .container { max-width: 560px; margin: 0 auto; background-color: #0D1B26; border: 1px solid #1A3042; border-radius: 16px; padding: 32px; }
-          .header { text-align: center; margin-bottom: 24px; }
-          .logo { font-size: 24px; font-weight: 800; color: #F5B82E; letter-spacing: -0.5px; }
-          .title { font-size: 20px; font-weight: 700; color: #F8FAFC; margin-bottom: 12px; }
-          .text { font-size: 14px; line-height: 1.6; color: #94A3B8; margin-bottom: 24px; }
-          .btn-container { text-align: center; margin: 28px 0; }
-          .btn { display: inline-block; background-color: #F5B82E; color: #07131C; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 10px; }
-          .footer { font-size: 12px; color: #64748B; text-align: center; margin-top: 32px; border-top: 1px solid #1A3042; pt: 16px; }
-          .link-fallback { word-break: break-all; color: #F5B82E; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <span class="logo">AvaliaTech</span>
-          </div>
-          <h1 class="title">Recuperação de Senha</h1>
-          <p class="text">Olá, <strong>${name}</strong>!</p>
-          <p class="text">Recebemos uma solicitação para redefinir a senha da sua conta no AvaliaTech. Para criar uma nova senha, clique no botão abaixo:</p>
-          <div class="btn-container">
-            <a href="${resetUrl}" class="btn" target="_blank">Redefinir Minha Senha</a>
-          </div>
-          <p class="text" style="font-size: 12px;">Este link é válido por <strong>1 hora</strong> e pode ser utilizado apenas uma vez. Se você não solicitou a redefinição de senha, ignore este e-mail com segurança.</p>
-          <p class="text" style="font-size: 12px;">Se o botão não funcionar, copie e cole o seguinte link no seu navegador:<br><a href="${resetUrl}" class="link-fallback">${resetUrl}</a></p>
-          <div class="footer">
-            <p>© ${new Date().getFullYear()} AvaliaTech. Plataforma de Gestão e Geração de Avaliações.</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const text = `Olá, ${name}!\n\nRecebemos uma solicitação para redefinir a senha da sua conta no AvaliaTech.\nAcesse o link abaixo para criar uma nova senha (válido por 1 hora):\n\n${resetUrl}\n\nSe você não solicitou, desconsidere esta mensagem.`;
-
   if (!transporter) {
-    console.log(`\n========================================`);
-    console.log(`[EMAIL SIMULADO (Sem SMTP configurado)]`);
-    console.log(`Para: ${to}`);
-    console.log(`Assunto: Recuperação de Senha — AvaliaTech`);
-    console.log(`Link de recuperação: ${resetUrl}`);
-    console.log(`========================================\n`);
+    console.warn(
+      `[AvaliaTech e-mail simulado] SMTP não configurado. Destinatário: ${options.to}; assunto: ${options.subject}`
+    );
     return { success: true, simulated: true };
   }
 
-  await transporter.sendMail({
-    from: defaultFrom,
-    to,
-    subject: "Recuperação de Senha — AvaliaTech",
-    text,
-    html
-  });
-
+  await transporter.sendMail({ from: defaultFrom, ...options });
   return { success: true, simulated: false };
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+}: SendPasswordResetEmailParams) {
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(resetUrl);
+  return sendOrSimulate({
+    to,
+    subject: "Recuperação de Senha | AvaliaTech",
+    text: `Olá, ${name}!\nUse este link para redefinir sua senha (válido por 1 hora):\n${resetUrl}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px"><h1>AvaliaTech</h1><h2>Recuperação de senha</h2><p>Olá, ${safeName}!</p><p>Use o link abaixo para criar uma nova senha. Ele expira em uma hora.</p><p><a href="${safeUrl}">Redefinir minha senha</a></p></div>`,
+  });
+}
+
+export async function sendEmailVerificationCode({
+  to,
+  name,
+  code,
+}: SendVerificationCodeParams) {
+  const safeName = escapeHtml(name);
+  return sendOrSimulate({
+    to,
+    subject: "Confirme seu e-mail | AvaliaTech",
+    text: `Olá, ${name}!\nSeu código de confirmação é ${code}. Ele expira em 10 minutos.`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px"><h1>AvaliaTech</h1><h2>Confirme seu e-mail</h2><p>Olá, ${safeName}!</p><p>Seu código de confirmação:</p><p style="font-size:32px;font-weight:bold;letter-spacing:8px">${escapeHtml(code)}</p><p>Este código expira em 10 minutos.</p></div>`,
+  });
 }
 
 export async function sendExamPdfEmail({
@@ -110,147 +114,32 @@ export async function sendExamPdfEmail({
   school,
   professor,
   pdfBuffer,
-  filename
+  filename,
 }: SendExamPdfEmailParams) {
-  const transporter = getMailTransporter();
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #07131C; color: #F8FAFC; margin: 0; padding: 24px; }
-          .container { max-width: 560px; margin: 0 auto; background-color: #0D1B26; border: 1px solid #1A3042; border-radius: 16px; padding: 32px; }
-          .header { text-align: center; margin-bottom: 24px; }
-          .logo { font-size: 24px; font-weight: 800; color: #F5B82E; letter-spacing: -0.5px; }
-          .title { font-size: 20px; font-weight: 700; color: #F8FAFC; margin-bottom: 12px; }
-          .text { font-size: 14px; line-height: 1.6; color: #94A3B8; margin-bottom: 20px; }
-          .badge-box { background-color: #112433; border: 1px solid #1E3448; border-radius: 12px; padding: 16px; margin: 20px 0; }
-          .badge-row { font-size: 13px; color: #CBD5E1; margin: 6px 0; }
-          .footer { font-size: 12px; color: #64748B; text-align: center; margin-top: 32px; border-top: 1px solid #1A3042; padding-top: 16px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <span class="logo">AvaliaTech</span>
-          </div>
-          <h1 class="title">Avaliação em PDF — ${examTitle}</h1>
-          <p class="text">Olá!</p>
-          <p class="text">Segue em anexo a avaliação diagramada gerada pela plataforma AvaliaTech, contendo as <strong>versões A e B</strong> com gabaritos automáticos prontos para impressão.</p>
-          <div class="badge-box">
-            <div class="badge-row"><strong>Disciplina:</strong> ${examTitle}</div>
-            ${school ? `<div class="badge-row"><strong>Instituição:</strong> ${school}</div>` : ""}
-            ${professor ? `<div class="badge-row"><strong>Professor(a):</strong> ${professor}</div>` : ""}
-            <div class="badge-row"><strong>Formato:</strong> PDF Diagramado (Versões A/B + Gabaritos)</div>
-          </div>
-          <p class="text" style="font-size: 12px;">O arquivo PDF encontra-se anexado a este e-mail (<strong>${filename}</strong>).</p>
-          <div class="footer">
-            <p>© ${new Date().getFullYear()} AvaliaTech. Plataforma de Gestão e Geração de Avaliações.</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const text = `Olá!\n\nSegue em anexo a avaliação de ${examTitle} gerada pelo AvaliaTech (Versões A/B com gabarito).\nArquivo: ${filename}`;
-
-  if (!transporter) {
-    console.log(`\n========================================`);
-    console.log(`[EMAIL SIMULADO (Sem SMTP configurado)]`);
-    console.log(`Para: ${to}`);
-    console.log(`Assunto: Avaliação em PDF: ${examTitle} — AvaliaTech`);
-    console.log(`Anexo: ${filename} (${pdfBuffer.length} bytes)`);
-    console.log(`========================================\n`);
-    return { success: true, simulated: true };
-  }
-
-  await transporter.sendMail({
-    from: defaultFrom,
+  return sendOrSimulate({
     to,
-    subject: `Avaliação em PDF: ${examTitle} — AvaliaTech`,
-    text,
-    html,
-    attachments: [
-      {
-        filename,
-        content: pdfBuffer,
-        contentType: "application/pdf"
-      }
-    ]
+    subject: `Avaliação em PDF: ${examTitle} | AvaliaTech`,
+    text: `Segue em anexo a avaliação de ${examTitle} gerada pelo AvaliaTech.`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px"><h1>AvaliaTech</h1><h2>Avaliação em PDF: ${escapeHtml(examTitle)}</h2><p>Segue em anexo a avaliação com versões A e B e respectivos gabaritos.</p>${school ? `<p><strong>Escola:</strong> ${escapeHtml(school)}</p>` : ""}${professor ? `<p><strong>Professor(a):</strong> ${escapeHtml(professor)}</p>` : ""}<p>Arquivo: ${escapeHtml(filename)}</p></div>`,
+    attachments: [{ filename, content: pdfBuffer, contentType: "application/pdf" }],
   });
-
-  return { success: true, simulated: false };
 }
 
-interface SendVerificationCodeParams {
-  to: string;
-  name: string;
-  code: string;
-}
-
-export async function sendEmailVerificationCode({
-  to,
+export async function sendContactEmail({
   name,
-  code
-}: SendVerificationCodeParams) {
-  const transporter = getMailTransporter();
-
-  if (!transporter) {
-    throw new Error(
-      "Envio de e-mail indisponível: configure o SMTP."
-    );
-  }
-
-  const safeName = name
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-  const html = `
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-      </head>
-      <body style="margin:0;padding:24px;background:#07131C;font-family:Arial,sans-serif;color:#F8FAFC">
-        <div style="max-width:480px;margin:auto;padding:28px;background:#0D1B26;border:1px solid #1A3042;border-radius:16px">
-          <h1 style="color:#F5B82E;text-align:center">AvaliaTech</h1>
-          <h2>Confirme seu e-mail</h2>
-          <p>Olá, ${safeName}!</p>
-          <p>Utilize o código abaixo para confirmar seu endereço de e-mail:</p>
-          <div style="margin:28px 0;padding:20px;background:#112433;border-radius:12px;text-align:center">
-            <span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#F5B82E">${code}</span>
-          </div>
-          <p>Este código expira em <strong>10 minutos</strong>.</p>
-          <p>Se você não iniciou esse cadastro, ignore esta mensagem.</p>
-          <hr style="border:0;border-top:1px solid #1A3042">
-          <p style="font-size:12px;color:#94A3B8;text-align:center">
-            © ${new Date().getFullYear()} AvaliaTech
-          </p>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const text =
-    `Olá, ${name}!\n\n` +
-    `Seu código de confirmação do AvaliaTech é: ${code}\n\n` +
-    `Ele expira em 10 minutos. ` +
-    `Se você não iniciou esse cadastro, ignore esta mensagem.`;
-
-  await transporter.sendMail({
-    from: defaultFrom,
-    to,
-    subject: "Confirme seu e-mail | AvaliaTech",
-    text,
-    html
+  email,
+  subject,
+  category,
+  message,
+}: SendContactEmailParams) {
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
+  const destination = process.env.CONTACT_EMAIL || process.env.SMTP_USER || email;
+  return sendOrSimulate({
+    to: destination,
+    subject: `[AvaliaTech] ${subject || "Mensagem de contato"}`,
+    text: `Nome: ${name}\nE-mail: ${email}\n\n${message}`,
+    html: `<div style="font-family:Arial,sans-serif"><h2>Mensagem de contato do AvaliaTech</h2><p><strong>Nome:</strong> ${safeName}</p><p><strong>E-mail:</strong> ${safeEmail}</p><p><strong>Mensagem:</strong><br>${safeMessage}</p></div>`,
   });
-
-  return { success: true };
 }
-

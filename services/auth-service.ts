@@ -1,28 +1,16 @@
 import { http } from "@/services/http";
 import type { ApiResponse } from "@/types/api";
-import type {
-  AuthUser,
-  CadastroRequest,
-  LoginRequest,
-} from "@/types/user";
+import type { AuthUser, CadastroRequest, LoginRequest } from "@/types/user";
 
 export function login(data: LoginRequest) {
-  return http<ApiResponse<{ user: AuthUser }>>(
-    "/api/auth/login",
-    {
-      method: "POST",
-      body: JSON.stringify(data),
-    }
-  );
+  return http<ApiResponse<{ user: AuthUser }>>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export function register(data: CadastroRequest) {
-  return http<
-    ApiResponse<{
-      email: string;
-      verificationRequired: boolean;
-    }>
-  >(
+  return http<ApiResponse<{ email: string; verificationRequired: boolean }>>(
     "/api/auth/register",
     {
       method: "POST",
@@ -32,11 +20,7 @@ export function register(data: CadastroRequest) {
 }
 
 export function logout() {
-  return http<ApiResponse<null>>(
-    "/api/auth/logout",
-    {
-      method: "POST",
-      body: undefined,
-    }
-  );
+  return http<ApiResponse<null>>("/api/auth/logout", {
+    method: "POST",
+  });
 }

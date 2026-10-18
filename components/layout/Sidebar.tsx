@@ -10,7 +10,9 @@ import {
   LayoutDashboard,
   User,
   X,
-  Sparkles
+  Sparkles,
+  Mail,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
@@ -35,6 +37,13 @@ const navigationSections = [
     title: "Conta",
     items: [
       { href: "/perfil", label: "Perfil", icon: User }
+    ]
+  },
+  {
+    title: "AvaliaTech",
+    items: [
+      { href: "/fale-conosco?origem=app", label: "Fale Conosco", icon: Mail },
+      { href: "/sobre-nos", label: "Sobre Nós", icon: Info }
     ]
   }
 ];
@@ -89,7 +98,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
-                  const active = pathname === item.href;
+                  const active = pathname === item.href.split("?")[0];
                   return (
                     <Link
                       key={item.href}

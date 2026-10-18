@@ -57,6 +57,16 @@ export function LandingFooter() {
                   Criar conta de professor
                 </Link>
               </li>
+              <li>
+                <Link href="/sobre-nos" className="hover:text-gold-400 transition">
+                  Sobre nós
+                </Link>
+              </li>
+              <li>
+                <Link href="/fale-conosco" className="hover:text-gold-400 transition">
+                  Fale conosco
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

@@ -2,7 +2,16 @@
 
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { Download, ImagePlus, Plus, X, Sparkles, Sliders, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+Download,
+ImagePlus,
+Plus,
+X,
+Sparkles,
+Sliders,
+CheckCircle2,
+AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Combobox } from "@/components/ui/Combobox";
 import { Input } from "@/components/ui/Input";
@@ -13,749 +22,1180 @@ import { useToast } from "@/hooks/useToast";
 import { DIFICULDADES, QUANTIDADES_PROVA } from "@/lib/constants";
 import { calculateAutoDistribution } from "@/lib/exam";
 import { getDisciplines } from "@/services/discipline-service";
-import { generateExamPdf, getExamDetails } from "@/services/exam-service";
+import {
+generateExamPdf,
+getExamDetails,
+getExamDistribution
+} from "@/services/exam-service";
 import { getProfile } from "@/services/profile-service";
 import type { DisciplinaWithAssuntos } from "@/types/discipline";
-import type { DistribuicaoDificuldade, GenerateExamRequest, ModoDificuldade } from "@/types/exam";
+import type {
+DistribuicaoDificuldade,
+GenerateExamRequest,
+ModoDificuldade
+} from "@/types/exam";
 
 const today = new Date().toISOString().slice(0, 10);
 
 export function ExamGeneratorForm() {
-  const { toast, showToast } = useToast();
-  const searchParams = useSearchParams();
-  const duplicateId = searchParams.get("duplicar");
+const { toast, showToast } = useToast();
+const searchParams = useSearchParams();
+const duplicateId = searchParams.get("duplicar");
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [modoDificuldade, setModoDificuldade] = useState<ModoDificuldade>("unica");
-  const [customDistribution, setCustomDistribution] = useState<DistribuicaoDificuldade>({
-    facil: 3,
-    media: 5,
-    dificil: 2
-  });
+const [isLoading, setIsLoading] = useState(false);
+const [logoPreview, setLogoPreview] = useState<string | null>(null);
+const [modoDificuldade, setModoDificuldade] =
+useState<ModoDificuldade>("unica");
 
-  const [form, setForm] = useState<GenerateExamRequest>({
-    escola: "",
-    professor: "",
-    disciplina: "",
-    assuntos: [],
-    dificuldade: "Fácil",
-    modoDificuldade: "unica",
-    quantidadeQuestoes: 10,
-    dataProva: today,
-    valorAvaliacao: "10,0",
-    logoBase64: null,
-    logoMime: null
-  });
-  const [subjectDraft, setSubjectDraft] = useState("");
+const [customDistribution, setCustomDistribution] =
+useState<DistribuicaoDificuldade>({
+facil: 3,
+media: 5,
+dificil: 2
+});
 
-  const [disciplines, setDisciplines] = useState<DisciplinaWithAssuntos[]>([]);
+const [autoDistribution, setAutoDistribution] =
+useState<DistribuicaoDificuldade>(
+calculateAutoDistribution(10)
+);
 
-  // Carrega dados do perfil, disciplinas e duplicação se houver
-  useEffect(() => {
-    async function loadInitialData() {
-      try {
-        const [profileRes, discRes] = await Promise.allSettled([
-          getProfile(),
-          getDisciplines()
-        ]);
+const [autoCounts, setAutoCounts] = useState({
+facil: 0,
+media: 0,
+dificil: 0,
+total: 0
+});
 
-        if (discRes.status === "fulfilled" && discRes.value.data) {
-          setDisciplines(discRes.value.data);
-        }
+const [autoLoading, setAutoLoading] = useState(false);
+const [autoError, setAutoError] = useState<string | null>(null);
+const [autoHasEnoughTotal, setAutoHasEnoughTotal] = useState(false);
+const [autoTotalAvailable, setAutoTotalAvailable] = useState(0);
+const [autoAdjusted, setAutoAdjusted] = useState(false);
 
-        if (profileRes.status === "fulfilled" && profileRes.value.data) {
-          setForm((current) => ({
-            ...current,
-            professor: current.professor || profileRes.value.data?.nome || "",
-            logoBase64: current.logoBase64 || profileRes.value.data?.logo_base64 || null,
-            logoMime: current.logoMime || (profileRes.value.data?.logo_mime as "image/png" | "image/jpeg" | null) || null
-          }));
-          if (profileRes.value.data.logo_base64) setLogoPreview(profileRes.value.data.logo_base64);
-        }
+const [form, setForm] = useState<GenerateExamRequest>({
+escola: "",
+professor: "",
+disciplina: "",
+assuntos: [],
+dificuldade: "Fácil",
+modoDificuldade: "unica",
+quantidadeQuestoes: 10,
+dataProva: today,
+valorAvaliacao: "10,0",
+logoBase64: null,
+logoMime: null
+});
 
-        if (duplicateId) {
-          const examRes = await getExamDetails(Number(duplicateId));
-          if (examRes.data?.exam) {
-            const ex = examRes.data.exam;
-            const subjects = ex.assunto.split(",").map((s) => s.trim()).filter(Boolean);
-            setForm((current) => ({
-              ...current,
-              escola: ex.escola,
-              professor: ex.professor,
-              disciplina: ex.disciplina,
-              assuntos: subjects,
-              dificuldade: ex.dificuldade,
-              quantidadeQuestoes: ex.quantidade_questoes as 10 | 15 | 20 | 25,
-              valorAvaliacao: ex.valor_avaliacao || "10,0"
-            }));
-            showToast("Dados da prova carregados para duplicação.", "info");
-          }
-        }
-      } catch {
-        // Continua sem falhar
+const [subjectDraft, setSubjectDraft] = useState("");
+const [disciplines, setDisciplines] =
+useState<DisciplinaWithAssuntos[]>([]);
+
+// Carrega perfil, disciplinas e dados para duplicação.
+useEffect(() => {
+async function loadInitialData() {
+try {
+const [profileRes, discRes] = await Promise.allSettled([
+getProfile(),
+getDisciplines()
+]);
+
+    if (
+      discRes.status === "fulfilled" &&
+      discRes.value.data
+    ) {
+      setDisciplines(discRes.value.data);
+    }
+
+    if (
+      profileRes.status === "fulfilled" &&
+      profileRes.value.data
+    ) {
+      setForm((current) => ({
+        ...current,
+        professor:
+          current.professor ||
+          profileRes.value.data?.nome ||
+          "",
+        logoBase64:
+          current.logoBase64 ||
+          profileRes.value.data?.logo_base64 ||
+          null,
+        logoMime:
+          current.logoMime ||
+          (profileRes.value.data?.logo_mime as
+            | "image/png"
+            | "image/jpeg"
+            | null) ||
+          null
+      }));
+
+      if (profileRes.value.data.logo_base64) {
+        setLogoPreview(profileRes.value.data.logo_base64);
       }
     }
 
-    loadInitialData();
-  }, [duplicateId, showToast]);
-
-  // Atualiza distribuição personalizada quando muda a quantidade total
-  useEffect(() => {
-    const auto = calculateAutoDistribution(form.quantidadeQuestoes);
-    setCustomDistribution(auto);
-  }, [form.quantidadeQuestoes]);
-
-  function update<K extends keyof GenerateExamRequest>(key: K, value: GenerateExamRequest[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function updateDiscipline(disciplina: string) {
-    setForm((current) => ({ ...current, disciplina, assuntos: current.disciplina === disciplina ? current.assuntos : [] }));
-    setSubjectDraft("");
-  }
-
-  function addSubject(assunto: string) {
-    setForm((current) => current.assuntos.includes(assunto) ? current : { ...current, assuntos: [...current.assuntos, assunto] });
-    setSubjectDraft("");
-  }
-
-  function removeSubject(assunto: string) {
-    setForm((current) => ({ ...current, assuntos: current.assuntos.filter((item) => item !== assunto) }));
-  }
-
-  function handleLogoChange(file?: File) {
-    if (!file) return;
-    if (!["image/png", "image/jpeg"].includes(file.type)) {
-      showToast("Envie uma logo PNG, JPG ou JPEG.", "error");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      showToast("A logo deve ter no máximo 2 MB.", "error");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result);
-      setLogoPreview(result);
-      setForm((current) => ({ ...current, logoBase64: result, logoMime: file.type as "image/png" | "image/jpeg" }));
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function removeLogo() {
-    setLogoPreview(null);
-    setForm((current) => ({ ...current, logoBase64: null, logoMime: null }));
-  }
-
-  const currentCustomSum = customDistribution.facil + customDistribution.media + customDistribution.dificil;
-  const isCustomSumValid = currentCustomSum === form.quantidadeQuestoes;
-  const autoDist = calculateAutoDistribution(form.quantidadeQuestoes);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (form.assuntos.length === 0) {
-      showToast("Selecione pelo menos um assunto.", "error");
-      return;
-    }
-
-    if (modoDificuldade === "personalizada" && !isCustomSumValid) {
-      showToast(
-        `Você selecionou ${form.quantidadeQuestoes} questões, mas a distribuição atual totaliza ${currentCustomSum}.`,
-        "error"
+    if (duplicateId) {
+      const examRes = await getExamDetails(
+        Number(duplicateId)
       );
-      return;
+
+      if (examRes.data?.exam) {
+        const ex = examRes.data.exam;
+        const subjects = ex.assunto
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean);
+
+        setForm((current) => ({
+          ...current,
+          escola: ex.escola,
+          professor: ex.professor,
+          disciplina: ex.disciplina,
+          assuntos: subjects,
+          dificuldade: ex.dificuldade,
+          quantidadeQuestoes:
+            ex.quantidade_questoes as 10 | 15 | 20 | 25,
+          valorAvaliacao: ex.valor_avaliacao || "10,0"
+        }));
+
+        showToast(
+          "Dados da prova carregados para duplicação.",
+          "info"
+        );
+      }
     }
+  } catch {
+    // Continua sem falhar se o perfil não puder ser carregado.
+  }
+}
 
-    setIsLoading(true);
+void loadInitialData();
 
-    const payload: GenerateExamRequest = {
-      ...form,
-      modoDificuldade,
-      dificuldade:
-        modoDificuldade === "automatica"
-          ? "Balanceada"
-          : modoDificuldade === "personalizada"
-          ? "Personalizada"
-          : form.dificuldade,
-      distribuicao:
-        modoDificuldade === "automatica"
-          ? autoDist
-          : modoDificuldade === "personalizada"
-          ? customDistribution
-          : null
-    };
+}, [duplicateId, showToast]);
 
-    try {
-      const blob = await generateExamPdf(payload);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `avaliatech-${form.disciplina || "prova"}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      showToast("PDF gerado com sucesso.", "success");
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "Erro ao gerar prova.", "error");
-    } finally {
-      setIsLoading(false);
-    }
+// Atualiza a distribuição personalizada quando muda a quantidade.
+useEffect(() => {
+setCustomDistribution(
+calculateAutoDistribution(form.quantidadeQuestoes)
+);
+}, [form.quantidadeQuestoes]);
+
+// Consulta as questões reais e recalcula o balanceamento automático.
+useEffect(() => {
+if (modoDificuldade !== "automatica") return;
+
+const controller = new AbortController();
+
+async function loadAutomaticDistribution() {
+  setAutoError(null);
+
+  if (!form.disciplina || form.assuntos.length === 0) {
+    setAutoDistribution(
+      calculateAutoDistribution(form.quantidadeQuestoes)
+    );
+    setAutoCounts({
+      facil: 0,
+      media: 0,
+      dificil: 0,
+      total: 0
+    });
+    setAutoTotalAvailable(0);
+    setAutoHasEnoughTotal(false);
+    setAutoAdjusted(false);
+    setAutoLoading(false);
+    return;
   }
 
-  return (
-    <>
-      {toast && <Toast message={toast.message} type={toast.type} />}
-      <form
-        className="rounded-2xl border border-navy-800 bg-navy-900/60 p-5 sm:p-7 shadow-xs space-y-7"
-        onSubmit={handleSubmit}
-      >
-        {/* Seção 1: Informações da Prova */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-100">Informações da prova</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              Dados do cabeçalho institucional e parâmetros da avaliação.
-            </p>
-          </div>
+  setAutoLoading(true);
 
-          <div className="grid gap-3.5 sm:grid-cols-2">
-            <Input
-              label="Nome da escola"
-              value={form.escola}
-              onChange={(event) => update("escola", event.target.value)}
-              required
-            />
-            <Input
-              label="Nome do professor"
-              value={form.professor}
-              onChange={(event) => update("professor", event.target.value)}
-              required
-            />
-            <Combobox
-              label="Disciplina"
-              value={form.disciplina}
-              onChange={updateDiscipline}
-              options={disciplines.map((d) => ({
-                label: d.nome,
-                value: d.nome,
-                count: d.total_questoes
-              }))}
-              placeholder="Selecione a disciplina"
-              searchPlaceholder="Buscar disciplina..."
-              emptyMessage="Nenhuma disciplina cadastrada."
-              required
-            />
-            <Input
-              label="Data da prova"
-              type="date"
-              value={form.dataProva}
-              onChange={(event) => update("dataProva", event.target.value)}
-              required
-            />
-            <Input
-              label="Valor da avaliação"
-              value={form.valorAvaliacao}
-              onChange={(event) => update("valorAvaliacao", event.target.value)}
-              placeholder="Ex.: 10,0"
-              required
-            />
-            <Select
-              label="Quantidade de questões"
-              value={form.quantidadeQuestoes}
-              onChange={(event) =>
-                update(
-                  "quantidadeQuestoes",
-                  Number(event.target.value) as GenerateExamRequest["quantidadeQuestoes"]
-                )
-              }
-              options={QUANTIDADES_PROVA.map((item) => ({
-                label: `${item} questões`,
-                value: item
-              }))}
-            />
-          </div>
-        </section>
+  try {
+    const result = await getExamDistribution(
+      {
+        disciplina: form.disciplina,
+        assuntos: form.assuntos,
+        quantidadeQuestoes: form.quantidadeQuestoes
+      },
+      controller.signal
+    );
 
-        {/* Seção 2: Conteúdo e Assuntos */}
-        <section className="border-t border-navy-800 pt-6 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-100">Conteúdo</h2>
-              <p className="mt-0.5 text-xs text-slate-400">
-                Selecione os tópicos da disciplina que serão cobrados.
-              </p>
+    setAutoDistribution(result.distribution);
+    setAutoCounts(result.counts);
+    setAutoTotalAvailable(result.totalAvailable);
+    setAutoHasEnoughTotal(result.hasEnoughTotal);
+    setAutoAdjusted(result.isAdjusted);
+  } catch (error) {
+    if (controller.signal.aborted) return;
+
+    setAutoError(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível consultar as questões disponíveis."
+    );
+
+    setAutoHasEnoughTotal(false);
+  } finally {
+    if (!controller.signal.aborted) {
+      setAutoLoading(false);
+    }
+  }
+}
+
+void loadAutomaticDistribution();
+
+return () => controller.abort();
+
+}, [
+modoDificuldade,
+form.disciplina,
+form.assuntos,
+form.quantidadeQuestoes
+]);
+
+function update<K extends keyof GenerateExamRequest>(
+key: K,
+value: GenerateExamRequest[K]
+) {
+setForm((current) => ({
+...current,
+[key]: value
+}));
+}
+
+function updateDiscipline(disciplina: string) {
+setForm((current) => ({
+...current,
+disciplina,
+assuntos:
+current.disciplina === disciplina
+? current.assuntos
+: []
+}));
+
+setSubjectDraft("");
+
+}
+
+function addSubject(assunto: string) {
+setForm((current) =>
+current.assuntos.includes(assunto)
+? current
+: {
+...current,
+assuntos: [...current.assuntos, assunto]
+}
+);
+
+setSubjectDraft("");
+
+}
+
+function removeSubject(assunto: string) {
+setForm((current) => ({
+...current,
+assuntos: current.assuntos.filter(
+(item) => item !== assunto
+)
+}));
+}
+
+function handleLogoChange(file?: File) {
+if (!file) return;
+
+if (!["image/png", "image/jpeg"].includes(file.type)) {
+  showToast("Envie uma logo PNG, JPG ou JPEG.", "error");
+  return;
+}
+
+if (file.size > 2 * 1024 * 1024) {
+  showToast("A logo deve ter no máximo 2 MB.", "error");
+  return;
+}
+
+const reader = new FileReader();
+
+reader.onload = () => {
+  const result = String(reader.result);
+
+  setLogoPreview(result);
+
+  setForm((current) => ({
+    ...current,
+    logoBase64: result,
+    logoMime: file.type as "image/png" | "image/jpeg"
+  }));
+};
+
+reader.readAsDataURL(file);
+
+}
+
+function removeLogo() {
+setLogoPreview(null);
+
+setForm((current) => ({
+  ...current,
+  logoBase64: null,
+  logoMime: null
+}));
+
+}
+
+const currentCustomSum =
+customDistribution.facil +
+customDistribution.media +
+customDistribution.dificil;
+
+const isCustomSumValid =
+currentCustomSum === form.quantidadeQuestoes;
+
+const autoDist = autoDistribution;
+
+async function handleSubmit(
+event: FormEvent<HTMLFormElement>
+) {
+event.preventDefault();
+
+if (form.assuntos.length === 0) {
+  showToast(
+    "Selecione pelo menos um assunto.",
+    "error"
+  );
+  return;
+}
+
+if (
+  modoDificuldade === "personalizada" &&
+  !isCustomSumValid
+) {
+  showToast(
+    `Você selecionou ${form.quantidadeQuestoes} questões, mas a distribuição atual totaliza ${currentCustomSum}.`,
+    "error"
+  );
+  return;
+}
+
+if (modoDificuldade === "automatica") {
+  if (autoLoading) {
+    showToast(
+      "Aguarde a consulta das questões disponíveis.",
+      "info"
+    );
+    return;
+  }
+
+  if (autoError) {
+    showToast(autoError, "error");
+    return;
+  }
+
+  if (!autoHasEnoughTotal) {
+    showToast(
+      `Não há questões suficientes. Encontradas: ${autoTotalAvailable}; necessárias: ${form.quantidadeQuestoes}.`,
+      "error"
+    );
+    return;
+  }
+
+  const automaticSum =
+    autoDist.facil +
+    autoDist.media +
+    autoDist.dificil;
+
+  if (automaticSum !== form.quantidadeQuestoes) {
+    showToast(
+      "A distribuição automática ainda não está pronta. Aguarde e tente novamente.",
+      "error"
+    );
+    return;
+  }
+}
+
+setIsLoading(true);
+
+const payload: GenerateExamRequest = {
+  ...form,
+  modoDificuldade,
+  dificuldade:
+    modoDificuldade === "automatica"
+      ? "Balanceada"
+      : modoDificuldade === "personalizada"
+        ? "Personalizada"
+        : form.dificuldade,
+  distribuicao:
+    modoDificuldade === "automatica"
+      ? autoDist
+      : modoDificuldade === "personalizada"
+        ? customDistribution
+        : null
+};
+
+try {
+  const blob = await generateExamPdf(payload);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `avaliatech-${form.disciplina || "prova"}.pdf`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+
+  showToast("PDF gerado com sucesso.", "success");
+} catch (error) {
+  showToast(
+    error instanceof Error
+      ? error.message
+      : "Erro ao gerar prova.",
+    "error"
+  );
+} finally {
+  setIsLoading(false);
+}
+
+}
+
+return (
+<>
+{toast && (
+<Toast message={toast.message} type={toast.type} />
+)}
+
+  <form
+    className="rounded-2xl border border-navy-800 bg-navy-900/60 p-5 sm:p-7 shadow-xs space-y-7"
+    onSubmit={handleSubmit}
+  >
+    {/* Seção 1: Informações da prova */}
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold text-slate-100">
+          Informações da prova
+        </h2>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Dados do cabeçalho institucional e parâmetros da avaliação.
+        </p>
+      </div>
+
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Input
+          label="Nome da escola"
+          value={form.escola}
+          onChange={(event) =>
+            update("escola", event.target.value)
+          }
+          required
+        />
+
+        <Input
+          label="Nome do professor"
+          value={form.professor}
+          onChange={(event) =>
+            update("professor", event.target.value)
+          }
+          required
+        />
+
+        <Combobox
+          label="Disciplina"
+          value={form.disciplina}
+          onChange={updateDiscipline}
+          options={disciplines.map((discipline) => ({
+            label: discipline.nome,
+            value: discipline.nome,
+            count: discipline.total_questoes
+          }))}
+          placeholder="Selecione a disciplina"
+          searchPlaceholder="Buscar disciplina..."
+          emptyMessage="Nenhuma disciplina cadastrada."
+          required
+        />
+
+        <Input
+          label="Data da prova"
+          type="date"
+          value={form.dataProva}
+          onChange={(event) =>
+            update("dataProva", event.target.value)
+          }
+          required
+        />
+
+        <Input
+          label="Valor da avaliação"
+          value={form.valorAvaliacao}
+          onChange={(event) =>
+            update("valorAvaliacao", event.target.value)
+          }
+          placeholder="Ex.: 10,0"
+          required
+        />
+
+        <Select
+          label="Quantidade de questões"
+          value={form.quantidadeQuestoes}
+          onChange={(event) =>
+            update(
+              "quantidadeQuestoes",
+              Number(event.target.value) as
+                GenerateExamRequest["quantidadeQuestoes"]
+            )
+          }
+          options={QUANTIDADES_PROVA.map((item) => ({
+            label: `${item} questões`,
+            value: item
+          }))}
+        />
+      </div>
+    </section>
+
+    {/* Seção 2: Conteúdo e assuntos */}
+    <section className="border-t border-navy-800 pt-6 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-100">
+            Conteúdo
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Selecione os tópicos da disciplina que serão cobrados.
+          </p>
+        </div>
+
+        {form.assuntos.length > 0 && (
+          <button
+            type="button"
+            onClick={() => update("assuntos", [])}
+            className="text-xs font-medium text-gold-400 hover:text-gold-300 hover:underline"
+          >
+            Limpar seleção
+          </button>
+        )}
+      </div>
+
+      {/* Assuntos cadastrados para a disciplina */}
+      {(() => {
+        const currentDisc = disciplines.find(
+          (discipline) =>
+            discipline.nome.toLowerCase() ===
+            form.disciplina.toLowerCase()
+        );
+
+        const discSubjects = currentDisc?.assuntos ?? [];
+
+        if (!discSubjects.length) return null;
+
+        return (
+          <div className="rounded-xl border border-navy-800 bg-navy-950/40 p-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Assuntos cadastrados nesta disciplina:
+              </span>
+
+              {discSubjects.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allNames = discSubjects.map(
+                      (subject) => subject.nome
+                    );
+
+                    update(
+                      "assuntos",
+                      Array.from(
+                        new Set([
+                          ...form.assuntos,
+                          ...allNames
+                        ])
+                      )
+                    );
+                  }}
+                  className="text-[11px] font-semibold text-gold-400 hover:underline"
+                >
+                  + Selecionar todos
+                </button>
+              )}
             </div>
-            {form.assuntos.length > 0 && (
+
+            <div className="flex flex-wrap gap-1.5">
+              {discSubjects.map((subject) => {
+                const isSelected =
+                  form.assuntos.includes(subject.nome);
+
+                return (
+                  <button
+                    key={subject.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        removeSubject(subject.nome);
+                      } else {
+                        addSubject(subject.nome);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                      isSelected
+                        ? "bg-gold-500/20 text-gold-400 border border-gold-500/40 shadow-xs"
+                        : "bg-navy-850 text-slate-300 border border-navy-700 hover:border-navy-600 hover:text-slate-100"
+                    }`}
+                  >
+                    <span>{subject.nome}</span>
+
+                    {isSelected ? (
+                      <CheckCircle2 className="h-3 w-3 text-gold-400" />
+                    ) : (
+                      <Plus className="h-3 w-3 text-slate-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {form.assuntos.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 py-1">
+          {form.assuntos.map((assunto) => (
+            <span
+              key={assunto}
+              className="inline-flex items-center gap-1.5 rounded-md bg-navy-800 border border-navy-700 px-2.5 py-1 text-xs font-medium text-slate-200"
+            >
+              <span>{assunto}</span>
+
               <button
                 type="button"
-                onClick={() => update("assuntos", [])}
-                className="text-xs font-medium text-gold-400 hover:text-gold-300 hover:underline"
+                onClick={() => removeSubject(assunto)}
+                aria-label={`Remover ${assunto}`}
+                className="rounded p-0.5 text-slate-400 transition hover:text-rose-400"
               >
-                Limpar seleção
+                <X className="h-3 w-3" />
               </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <SuggestionInput
+        label="Adicionar outro assunto manualmente"
+        type="subject"
+        value={subjectDraft}
+        onChange={setSubjectDraft}
+        onSelect={addSubject}
+        discipline={form.disciplina}
+        disabled={!form.disciplina}
+        placeholder={
+          form.disciplina
+            ? "Digite para buscar ou adicionar outros assuntos"
+            : "Escolha uma disciplina primeiro"
+        }
+      />
+    </section>
+
+    {/* Seção 3: Dificuldade */}
+    <section className="border-t border-navy-800 pt-6 space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold text-slate-100">
+          Distribuição de dificuldade
+        </h2>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Defina como o sistema deve selecionar os níveis das questões.
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        <button
+          type="button"
+          onClick={() => setModoDificuldade("unica")}
+          className={`rounded-lg border px-3 py-2.5 text-xs font-semibold transition text-left sm:text-center ${
+            modoDificuldade === "unica"
+              ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+              : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
+          }`}
+        >
+          Dificuldade única
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setModoDificuldade("automatica")}
+          className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
+            modoDificuldade === "automatica"
+              ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+              : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-gold-400" />
+          Balanceamento automático
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setModoDificuldade("personalizada")}
+          className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
+            modoDificuldade === "personalizada"
+              ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
+              : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
+          }`}
+        >
+          <Sliders className="h-3.5 w-3.5" />
+          Personalizada
+        </button>
+      </div>
+
+      {/* Modo de dificuldade única */}
+      {modoDificuldade === "unica" && (
+        <div className="max-w-xs pt-1">
+          <Select
+            label="Nível de dificuldade"
+            value={form.dificuldade}
+            onChange={(event) =>
+              update(
+                "dificuldade",
+                event.target.value as
+                  GenerateExamRequest["dificuldade"]
+              )
+            }
+            options={DIFICULDADES.map((item) => ({
+              label: item,
+              value: item
+            }))}
+          />
+        </div>
+      )}
+
+      {/* Modo de balanceamento automático */}
+      {modoDificuldade === "automatica" && (
+        <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-medium text-slate-300">
+              Distribuição para {form.quantidadeQuestoes} questões
+            </p>
+
+            {autoLoading && (
+              <span className="text-[11px] text-gold-400">
+                Consultando banco...
+              </span>
             )}
           </div>
 
-          {/* Sugestões rápidas de assuntos da disciplina cadastrada */}
-          {(() => {
-            const currentDisc = disciplines.find(
-              (d) => d.nome.toLowerCase() === form.disciplina.toLowerCase()
-            );
-            const discSubjects = currentDisc?.assuntos ?? [];
-            if (!discSubjects.length) return null;
-
-            return (
-              <div className="rounded-xl border border-navy-800 bg-navy-950/40 p-3">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Assuntos cadastrados nesta disciplina:
-                  </span>
-                  {discSubjects.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const allNames = discSubjects.map((s) => s.nome);
-                        update("assuntos", Array.from(new Set([...form.assuntos, ...allNames])));
-                      }}
-                      className="text-[11px] font-semibold text-gold-400 hover:underline"
-                    >
-                      + Selecionar todos
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {discSubjects.map((subj) => {
-                    const isSelected = form.assuntos.includes(subj.nome);
-                    return (
-                      <button
-                        key={subj.id}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) removeSubject(subj.nome);
-                          else addSubject(subj.nome);
-                        }}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                          isSelected
-                            ? "bg-gold-500/20 text-gold-400 border border-gold-500/40 shadow-xs"
-                            : "bg-navy-850 text-slate-300 border border-navy-700 hover:border-navy-600 hover:text-slate-100"
-                        }`}
-                      >
-                        <span>{subj.nome}</span>
-                        {isSelected ? (
-                          <CheckCircle2 className="h-3 w-3 text-gold-400" />
-                        ) : (
-                          <Plus className="h-3 w-3 text-slate-400" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          {form.assuntos.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 py-1">
-              {form.assuntos.map((assunto) => (
-                <span
-                  key={assunto}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-navy-800 border border-navy-700 px-2.5 py-1 text-xs font-medium text-slate-200"
-                >
-                  <span>{assunto}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeSubject(assunto)}
-                    aria-label={`Remover ${assunto}`}
-                    className="rounded p-0.5 text-slate-400 transition hover:text-rose-400"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          <SuggestionInput
-            label="Adicionar outro assunto manualmente"
-            type="subject"
-            value={subjectDraft}
-            onChange={setSubjectDraft}
-            onSelect={addSubject}
-            discipline={form.disciplina}
-            disabled={!form.disciplina}
-            placeholder={
-              form.disciplina
-                ? "Digite para buscar ou adicionar outros assuntos"
-                : "Escolha uma disciplina primeiro"
-            }
-          />
-        </section>
-
-        {/* Seção 3: Dificuldade */}
-        <section className="border-t border-navy-800 pt-6 space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-100">
-              Distribuição de dificuldade
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              Defina como o sistema deve selecionar os níveis das questões.
+          {!form.disciplina || form.assuntos.length === 0 ? (
+            <p className="mt-2 text-xs text-slate-400">
+              Selecione uma disciplina e pelo menos um assunto para
+              calcular a distribuição com base nas questões cadastradas.
             </p>
-          </div>
-
-          {/* Escolha natural de botões */}
-          <div className="grid gap-2 sm:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => setModoDificuldade("unica")}
-              className={`rounded-lg border px-3 py-2.5 text-xs font-semibold transition text-left sm:text-center ${
-                modoDificuldade === "unica"
-                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
-              }`}
-            >
-              Dificuldade única
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModoDificuldade("automatica")}
-              className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
-                modoDificuldade === "automatica"
-                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-gold-400" />
-              Balanceamento automático
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModoDificuldade("personalizada")}
-              className={`flex items-center justify-start sm:justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${
-                modoDificuldade === "personalizada"
-                  ? "border-gold-500/60 bg-navy-850 text-gold-400 ring-1 ring-gold-500/20"
-                  : "border-navy-800 bg-navy-950/60 text-slate-400 hover:border-navy-700 hover:text-slate-200"
-              }`}
-            >
-              <Sliders className="h-3.5 w-3.5" />
-              Personalizada
-            </button>
-          </div>
-
-          {/* Modo Único */}
-          {modoDificuldade === "unica" && (
-            <div className="max-w-xs pt-1">
-              <Select
-                label="Nível de dificuldade"
-                value={form.dificuldade}
-                onChange={(event) =>
-                  update(
-                    "dificuldade",
-                    event.target.value as GenerateExamRequest["dificuldade"]
-                  )
-                }
-                options={DIFICULDADES.map((item) => ({ label: item, value: item }))}
-              />
-            </div>
-          )}
-
-          {/* Modo Automático */}
-          {modoDificuldade === "automatica" && (
-            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3.5">
-              <p className="text-xs font-medium text-slate-300">
-                Distribuição proporcional para {form.quantidadeQuestoes} questões:
-              </p>
-              <div className="mt-2.5 flex flex-wrap gap-4 text-xs">
+          ) : (
+            <>
+              <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2 text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Fácil: <strong className="text-slate-100">{autoDist.facil}</strong>
+                  Fácil:{" "}
+                  <strong className="text-slate-100">
+                    {autoDist.facil}
+                  </strong>
+                  <span className="text-slate-400">
+                    / {autoCounts.facil} disponíveis
+                  </span>
                 </span>
+
                 <span className="flex items-center gap-1.5 font-medium text-amber-400">
                   <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Média: <strong className="text-slate-100">{autoDist.media}</strong>
+                  Média:{" "}
+                  <strong className="text-slate-100">
+                    {autoDist.media}
+                  </strong>
+                  <span className="text-slate-400">
+                    / {autoCounts.media} disponíveis
+                  </span>
                 </span>
+
                 <span className="flex items-center gap-1.5 font-medium text-rose-400">
                   <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  Difícil: <strong className="text-slate-100">{autoDist.dificil}</strong>
+                  Difícil:{" "}
+                  <strong className="text-slate-100">
+                    {autoDist.dificil}
+                  </strong>
+                  <span className="text-slate-400">
+                    / {autoCounts.dificil} disponíveis
+                  </span>
                 </span>
               </div>
-            </div>
-          )}
 
-          {/* Modo Personalizado */}
-          {modoDificuldade === "personalizada" && (
-            <div className="space-y-3 pt-1">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {/* Fácil */}
-                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-emerald-400">Fácil</span>
-                    <span className="text-[11px] text-slate-400">
-                      {Math.round(
-                        (customDistribution.facil / (form.quantidadeQuestoes || 1)) * 100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          facil: Math.max(0, curr.facil - 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Diminuir fáceis"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={0}
-                      max={form.quantidadeQuestoes}
-                      value={customDistribution.facil}
-                      onChange={(e) =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          facil: Math.max(0, Number(e.target.value))
-                        }))
-                      }
-                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          facil: Math.min(form.quantidadeQuestoes, curr.facil + 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Aumentar fáceis"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+              <p className="mt-2 text-[11px] text-slate-400">
+                Total disponível nos assuntos selecionados:{" "}
+                {autoTotalAvailable} questões.
+              </p>
 
-                {/* Média */}
-                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-amber-400">Média</span>
-                    <span className="text-[11px] text-slate-400">
-                      {Math.round(
-                        (customDistribution.media / (form.quantidadeQuestoes || 1)) * 100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          media: Math.max(0, curr.media - 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Diminuir médias"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={0}
-                      max={form.quantidadeQuestoes}
-                      value={customDistribution.media}
-                      onChange={(e) =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          media: Math.max(0, Number(e.target.value))
-                        }))
-                      }
-                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          media: Math.min(form.quantidadeQuestoes, curr.media + 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Aumentar médias"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+              {autoError && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-rose-400">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  {autoError}
+                </p>
+              )}
 
-                {/* Difícil */}
-                <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-rose-400">Difícil</span>
-                    <span className="text-[11px] text-slate-400">
-                      {Math.round(
-                        (customDistribution.dificil / (form.quantidadeQuestoes || 1)) * 100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          dificil: Math.max(0, curr.dificil - 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Diminuir difíceis"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={0}
-                      max={form.quantidadeQuestoes}
-                      value={customDistribution.dificil}
-                      onChange={(e) =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          dificil: Math.max(0, Number(e.target.value))
-                        }))
-                      }
-                      className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCustomDistribution((curr) => ({
-                          ...curr,
-                          dificil: Math.min(form.quantidadeQuestoes, curr.dificil + 1)
-                        }))
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
-                      aria-label="Aumentar difíceis"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Indicador de soma */}
-              <div
-                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium ${
-                  isCustomSumValid
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300"
-                    : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300"
-                }`}
-              >
-                <span className="flex items-center gap-1.5">
-                  {isCustomSumValid ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : (
-                    <AlertCircle className="h-3.5 w-3.5" />
-                  )}
-                  {isCustomSumValid
-                    ? "Total distribuído corretamente."
-                    : `Distribuição atual: ${currentCustomSum} de ${form.quantidadeQuestoes} questões.`}
-                </span>
-                <span className="font-semibold">
-                  {currentCustomSum} / {form.quantidadeQuestoes}
-                </span>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Seção 4: Identidade da Escola */}
-        <section className="border-t border-navy-800 pt-6 space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-100">Identidade da escola</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              Logomarca para exibição no cabeçalho impresso (opcional).
-            </p>
-          </div>
-
-          {logoPreview ? (
-            <div className="flex items-center justify-between rounded-xl border border-navy-800 bg-navy-950/50 p-3">
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={logoPreview}
-                  alt="Logo anexada"
-                  className="h-10 w-10 rounded-lg border border-navy-800 bg-navy-900 object-contain p-1"
-                />
-                <div>
-                  <p className="text-xs font-semibold text-slate-200">Logomarca anexada</p>
-                  <p className="text-[11px] text-slate-400">
-                    Será exibida no cabeçalho da avaliação.
+              {!autoError &&
+                !autoLoading &&
+                !autoHasEnoughTotal && (
+                  <p className="mt-2 flex items-start gap-1.5 text-xs text-rose-400">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    Não há questões suficientes para esta prova. Você
+                    precisa de {form.quantidadeQuestoes}, mas só existem{" "}
+                    {autoTotalAvailable} compatíveis.
                   </p>
-                </div>
+                )}
+
+              {!autoError &&
+                !autoLoading &&
+                autoHasEnoughTotal &&
+                autoAdjusted && (
+                  <p className="mt-2 text-xs text-amber-400">
+                    Distribuição adaptada à disponibilidade real do banco
+                    de questões.
+                  </p>
+                )}
+
+              {!autoError &&
+                !autoLoading &&
+                autoHasEnoughTotal &&
+                !autoAdjusted && (
+                  <p className="mt-2 text-xs text-emerald-400">
+                    Distribuição equilibrada com base nas questões
+                    disponíveis.
+                  </p>
+                )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Modo de distribuição personalizada */}
+      {modoDificuldade === "personalizada" && (
+        <div className="space-y-3 pt-1">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Fácil */}
+            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-emerald-400">
+                  Fácil
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {Math.round(
+                    (customDistribution.facil /
+                      (form.quantidadeQuestoes || 1)) *
+                      100
+                  )}
+                  %
+                </span>
               </div>
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer text-xs font-semibold text-gold-400 hover:text-gold-300">
-                  Alterar
-                  <input
-                    className="sr-only"
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    onChange={(event) => handleLogoChange(event.target.files?.[0])}
-                  />
-                </label>
+
+              <div className="mt-2 flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={removeLogo}
-                  className="text-xs font-medium text-slate-400 hover:text-rose-400"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      facil: Math.max(0, current.facil - 1)
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Diminuir fáceis"
                 >
-                  Remover
+                  -
+                </button>
+
+                <input
+                  type="number"
+                  min={0}
+                  max={form.quantidadeQuestoes}
+                  value={customDistribution.facil}
+                  onChange={(event) =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      facil: Math.max(
+                        0,
+                        Number(event.target.value)
+                      )
+                    }))
+                  }
+                  className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      facil: Math.min(
+                        form.quantidadeQuestoes,
+                        current.facil + 1
+                      )
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Aumentar fáceis"
+                >
+                  +
                 </button>
               </div>
             </div>
-          ) : (
-            <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-navy-750 bg-navy-950/40 p-4 transition hover:bg-navy-850/40">
-              <ImagePlus className="h-5 w-5 text-slate-400" />
-              <div className="text-left">
-                <span className="block text-xs font-semibold text-slate-200">
-                  + Adicionar logo da escola
+
+            {/* Média */}
+            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-amber-400">
+                  Média
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  PNG, JPG ou JPEG &bull; até 2 MB
+                  {Math.round(
+                    (customDistribution.media /
+                      (form.quantidadeQuestoes || 1)) *
+                      100
+                  )}
+                  %
                 </span>
               </div>
+
+              <div className="mt-2 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      media: Math.max(0, current.media - 1)
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Diminuir médias"
+                >
+                  -
+                </button>
+
+                <input
+                  type="number"
+                  min={0}
+                  max={form.quantidadeQuestoes}
+                  value={customDistribution.media}
+                  onChange={(event) =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      media: Math.max(
+                        0,
+                        Number(event.target.value)
+                      )
+                    }))
+                  }
+                  className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      media: Math.min(
+                        form.quantidadeQuestoes,
+                        current.media + 1
+                      )
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Aumentar médias"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Difícil */}
+            <div className="rounded-lg border border-navy-800 bg-navy-950/50 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-rose-400">
+                  Difícil
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {Math.round(
+                    (customDistribution.dificil /
+                      (form.quantidadeQuestoes || 1)) *
+                      100
+                  )}
+                  %
+                </span>
+              </div>
+
+              <div className="mt-2 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      dificil: Math.max(
+                        0,
+                        current.dificil - 1
+                      )
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Diminuir difíceis"
+                >
+                  -
+                </button>
+
+                <input
+                  type="number"
+                  min={0}
+                  max={form.quantidadeQuestoes}
+                  value={customDistribution.dificil}
+                  onChange={(event) =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      dificil: Math.max(
+                        0,
+                        Number(event.target.value)
+                      )
+                    }))
+                  }
+                  className="h-8 w-full rounded-lg border border-navy-700 bg-navy-950 text-center text-sm font-bold text-slate-100 outline-none transition focus:border-gold-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomDistribution((current) => ({
+                      ...current,
+                      dificil: Math.min(
+                        form.quantidadeQuestoes,
+                        current.dificil + 1
+                      )
+                    }))
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-navy-700 bg-navy-850 text-sm font-bold text-slate-300 transition hover:bg-navy-800"
+                  aria-label="Aumentar difíceis"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Indicador de soma */}
+          <div
+            className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium ${
+              isCustomSumValid
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300"
+                : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300"
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              {isCustomSumValid ? (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              ) : (
+                <AlertCircle className="h-3.5 w-3.5" />
+              )}
+
+              {isCustomSumValid
+                ? "Total distribuído corretamente."
+                : `Distribuição atual: ${currentCustomSum} de ${form.quantidadeQuestoes} questões.`}
+            </span>
+
+            <span className="font-semibold">
+              {currentCustomSum} / {form.quantidadeQuestoes}
+            </span>
+          </div>
+        </div>
+      )}
+    </section>
+
+    {/* Seção 4: Identidade da escola */}
+    <section className="border-t border-navy-800 pt-6 space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-slate-100">
+          Identidade da escola
+        </h2>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Logomarca para exibição no cabeçalho impresso (opcional).
+        </p>
+      </div>
+
+      {logoPreview ? (
+        <div className="flex items-center justify-between rounded-xl border border-navy-800 bg-navy-950/50 p-3">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoPreview}
+              alt="Logo anexada"
+              className="h-10 w-10 rounded-lg border border-navy-800 bg-navy-900 object-contain p-1"
+            />
+
+            <div>
+              <p className="text-xs font-semibold text-slate-200">
+                Logomarca anexada
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Será exibida no cabeçalho da avaliação.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="cursor-pointer text-xs font-semibold text-gold-400 hover:text-gold-300">
+              Alterar
               <input
                 className="sr-only"
                 type="file"
                 accept="image/png,image/jpeg"
-                onChange={(event) => handleLogoChange(event.target.files?.[0])}
+                onChange={(event) =>
+                  handleLogoChange(event.target.files?.[0])
+                }
               />
             </label>
-          )}
-        </section>
 
-        {/* Seção 5: Ação de Finalização */}
-        <div className="border-t border-navy-800 pt-6 flex justify-end">
-          <Button
-            type="submit"
-            isLoading={isLoading}
-            className="w-full sm:w-auto gap-2 px-6 py-2.5 text-xs font-semibold"
-          >
-            <Download className="h-4 w-4" /> Gerar PDF da prova
-          </Button>
+            <button
+              type="button"
+              onClick={removeLogo}
+              className="text-xs font-medium text-slate-400 hover:text-rose-400"
+            >
+              Remover
+            </button>
+          </div>
         </div>
-      </form>
-    </>
-  );
-}
+      ) : (
+        <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-navy-750 bg-navy-950/40 p-4 transition hover:bg-navy-850/40">
+          <ImagePlus className="h-5 w-5 text-slate-400" />
 
+          <div className="text-left">
+            <span className="block text-xs font-semibold text-slate-200">
+              + Adicionar logo da escola
+            </span>
+            <span className="text-[11px] text-slate-400">
+              PNG, JPG ou JPEG &bull; até 2 MB
+            </span>
+          </div>
+
+          <input
+            className="sr-only"
+            type="file"
+            accept="image/png,image/jpeg"
+            onChange={(event) =>
+              handleLogoChange(event.target.files?.[0])
+            }
+          />
+        </label>
+      )}
+    </section>
+
+    {/* Seção 5: Gerar prova */}
+    <div className="border-t border-navy-800 pt-6 flex justify-end">
+      <Button
+        type="submit"
+        isLoading={isLoading}
+        className="w-full sm:w-auto gap-2 px-6 py-2.5 text-xs font-semibold"
+      >
+        <Download className="h-4 w-4" />
+        Gerar PDF da prova
+      </Button>
+    </div>
+  </form>
+</>
+
+);
+}
