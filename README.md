@@ -8,7 +8,7 @@ Sistema web fullstack para professores criarem banco de questões, gerarem prova
 - TypeScript
 - Tailwind CSS
 - API Routes / Route Handlers do Next.js
-- MySQL
+- PostgreSQL
 - JWT com cookie `httpOnly`
 - bcryptjs para hash de senha
 - pdf-lib para geração de PDF no backend
@@ -66,8 +66,8 @@ avaliatech/
 ├── api/
 ├── components/
 ├── database/
-│   ├── schema.sql
-│   └── seed.sql
+│   ├── migrations/20261110_postgresql_initial.sql
+│   └── seed_postgresql.sql
 ├── hooks/
 ├── lib/
 ├── middleware/
@@ -82,7 +82,7 @@ avaliatech/
 ## Requisitos
 
 - Node.js 20 ou superior
-- MySQL 8 ou superior
+- PostgreSQL 16 ou superior
 - npm
 
 ## Instalação
@@ -98,11 +98,7 @@ npm install
 Crie o arquivo `.env.local` na raiz do projeto com base em `.env.example`:
 
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=avaliatech
+DATABASE_URL=postgresql://postgres:sua_senha@localhost:5432/avaliatech
 JWT_SECRET=troque-por-uma-chave-forte-com-no-minimo-32-caracteres
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
@@ -110,19 +106,26 @@ NODE_ENV=development
 
 ### 3. Importe o banco de dados
 
-```bash
-mysql -u root -p < database/schema.sql
-```
-
-O script cria o banco `avaliatech` e todas as tabelas automaticamente.
-
-### Atualizando um banco existente
-
-Se o banco foi criado antes do suporte a imagens nas questões, execute a migração uma única vez:
+Crie um banco vazio e execute o schema PostgreSQL (com `psql` instalado):
 
 ```bash
-mysql -u root -p avaliatech < database/migrations/20260831_add_question_image.sql
+createdb -h localhost -U postgres avaliatech
+psql -h localhost -U postgres -d avaliatech -v ON_ERROR_STOP=1 -f database/migrations/20261110_postgresql_initial.sql
 ```
+
+O schema inclui todas as funcionalidades e migrations anteriores, sem apagar tabelas. Execute uma única vez no destino vazio. Os arquivos `schema.sql`, `schema_aiven.sql`, `seed.sql` e as migrations anteriores a 20261110 são históricos do MySQL; não os execute no PostgreSQL.
+
+### Convertendo os dados de um MySQL existente
+
+1. Faça um backup do MySQL e interrompa gravações na aplicação durante a transferência.
+2. Prepare o PostgreSQL vazio com o comando acima. Use uma conexão direta para a migração.
+3. Configure `DATABASE_URL` (destino) e `MYSQL_SOURCE_URL=mysql://usuario:senha@host:3306/avaliatech` (origem) no `.env.local`, que não é versionado. Codifique caracteres especiais da senha na URL.
+4. Execute `npm run db:migrate:mysql`. O script exige todas as tabelas históricas na origem, lê uma snapshot consistente e copia em lotes dentro de uma transação no destino. Recusa destinos com dados, confere contagens e ajusta as sequências. Não modifica o MySQL. IDs, hashes de senha, provas salvas e datas UTC são preservados.
+5. Valide cadastro, confirmação de e-mail, login, recuperação de senha, disciplinas, questões, dashboard e geração/PDF de provas antes de liberar o acesso. Mantenha o backup e a origem para retorno se necessário. Remova `MYSQL_SOURCE_URL` do ambiente após a transferência.
+
+O driver `mysql2` é uma dependência de desenvolvimento usada somente pelo importador. A aplicação usa `pg`. Em produção, configure TLS conforme o provedor (por exemplo `sslmode=verify-full` e a CA correspondente); a aplicação não desativa a validação de certificados.
+
+As buscas textuais usam `ILIKE`, preservando buscas sem distinção entre maiúsculas e minúsculas. PostgreSQL distingue acentos e diferenças de caixa nas comparações por igualdade, ao contrário da collation MySQL antiga; revise cadastros legados com essas variações. E-mails, nomes de disciplinas e assuntos têm índices únicos adicionais sem distinção de caixa.
 
 ### 4. Rode o projeto
 
@@ -145,7 +148,7 @@ Acesse `/cadastro` e crie a conta inicial. A senha será salva com bcrypt, nunca
 Depois de criar o primeiro professor, você pode importar questões de exemplo:
 
 ```bash
-mysql -u root -p avaliatech < database/seed.sql
+psql -h localhost -U postgres -d avaliatech -v ON_ERROR_STOP=1 -f database/seed_postgresql.sql
 ```
 
 O seed só insere questões se existir um usuário com `id = 1`.

@@ -1,5 +1,5 @@
-import type { ResultSetHeader } from "mysql2";
-import type { ExecuteValues } from "mysql2";
+import type { MutationResult } from "@/lib/db";
+import type { DbValue } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { invalidateDashboardCache } from "@/lib/cache";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 function buildFilters(searchParams: URLSearchParams, userId: number) {
   const where = ["usuario_id = :usuarioId"];
-  const params: Record<string, ExecuteValues> = { usuarioId: userId };
+  const params: Record<string, DbValue> = { usuarioId: userId };
 
   const search = cleanOptionalText(searchParams.get("search"));
   const disciplina = cleanOptionalText(searchParams.get("disciplina"));
@@ -22,7 +22,7 @@ function buildFilters(searchParams: URLSearchParams, userId: number) {
   const dificuldade = cleanOptionalText(searchParams.get("dificuldade"));
 
   if (search) {
-    where.push("(pergunta LIKE :search OR disciplina LIKE :search OR assunto LIKE :search)");
+    where.push("(pergunta ILIKE :search OR disciplina ILIKE :search OR assunto ILIKE :search)");
     params.search = `%${search}%`;
   }
 
@@ -113,10 +113,10 @@ export async function POST(request: Request) {
     );
     if (existing.length > 0) return fail("Você já possui uma questão com esta pergunta.", 409);
 
-    const [result] = await db.execute<ResultSetHeader>(
+    const [result] = await db.execute<MutationResult>(
       `INSERT INTO questoes
        (usuario_id, pergunta, imagem, alternativa_a, alternativa_b, alternativa_c, alternativa_d, correta, disciplina, assunto, dificuldade)
-       VALUES (:usuarioId, :pergunta, :imagem, :alternativa_a, :alternativa_b, :alternativa_c, :alternativa_d, :correta, :disciplina, :assunto, :dificuldade)`,
+       VALUES (:usuarioId, :pergunta, :imagem, :alternativa_a, :alternativa_b, :alternativa_c, :alternativa_d, :correta, :disciplina, :assunto, :dificuldade) RETURNING id`,
       { usuarioId: user.id, ...data }
     );
 

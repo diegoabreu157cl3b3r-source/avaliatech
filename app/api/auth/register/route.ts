@@ -1,5 +1,5 @@
 import { createHash, randomInt } from "node:crypto";
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { cadastroSchema } from "@/lib/validators";
 import { cleanEmail, cleanText } from "@/lib/sanitizers";
@@ -32,10 +32,10 @@ if (exists.length > 0) {
 
 const senhaHash = await hashPassword(parsed.data.senha);
 
-const [result] = await db.execute<ResultSetHeader>(
+const [result] = await db.execute<MutationResult>(
   `INSERT INTO usuarios
     (nome, email, senha_hash, email_verificado)
-   VALUES (:nome, :email, :senhaHash, 0)`,
+   VALUES (:nome, :email, :senhaHash, 0) RETURNING id`,
   { nome, email, senhaHash }
 );
 
@@ -52,12 +52,12 @@ const expiracao = new Date(Date.now() + 10 * 60 * 1000)
 await db.execute(
   `INSERT INTO verificacoes_email
     (usuario_id, codigo_hash, expira_em, tentativas, enviado_em)
-   VALUES (:usuarioId, :codigoHash, :expiracao, 0, UTC_TIMESTAMP())
-   ON DUPLICATE KEY UPDATE
-    codigo_hash = VALUES(codigo_hash),
-    expira_em = VALUES(expira_em),
+   VALUES (:usuarioId, :codigoHash, :expiracao, 0, CURRENT_TIMESTAMP)
+   ON CONFLICT (usuario_id) DO UPDATE SET
+    codigo_hash = EXCLUDED.codigo_hash,
+    expira_em = EXCLUDED.expira_em,
     tentativas = 0,
-    enviado_em = UTC_TIMESTAMP()`,
+    enviado_em = CURRENT_TIMESTAMP`,
   {
     usuarioId: result.insertId,
     codigoHash,

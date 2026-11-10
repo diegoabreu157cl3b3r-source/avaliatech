@@ -75,7 +75,7 @@ const records = await query<{ valido: number }[]>(
   `SELECT 1 AS valido
    FROM verificacoes_email
    WHERE usuario_id = :usuarioId
-     AND expira_em > UTC_TIMESTAMP()
+     AND expira_em > CURRENT_TIMESTAMP
    LIMIT 1`,
   { usuarioId: user.id }
 );

@@ -48,7 +48,7 @@ const recent = await query<RecentVerification[]>(
   `SELECT id
    FROM verificacoes_email
    WHERE usuario_id = :usuarioId
-     AND enviado_em > UTC_TIMESTAMP() - INTERVAL 60 SECOND
+     AND enviado_em > CURRENT_TIMESTAMP - INTERVAL '60 seconds'
    LIMIT 1`,
   { usuarioId: user.id }
 );
@@ -74,12 +74,12 @@ const expiracao = new Date(Date.now() + 10 * 60 * 1000)
 await db.execute(
   `INSERT INTO verificacoes_email
     (usuario_id, codigo_hash, expira_em, tentativas, enviado_em)
-   VALUES (:usuarioId, :codigoHash, :expiracao, 0, UTC_TIMESTAMP())
-   ON DUPLICATE KEY UPDATE
-     codigo_hash = VALUES(codigo_hash),
-     expira_em = VALUES(expira_em),
+   VALUES (:usuarioId, :codigoHash, :expiracao, 0, CURRENT_TIMESTAMP)
+   ON CONFLICT (usuario_id) DO UPDATE SET
+     codigo_hash = EXCLUDED.codigo_hash,
+     expira_em = EXCLUDED.expira_em,
      tentativas = 0,
-     enviado_em = UTC_TIMESTAMP()`,
+     enviado_em = CURRENT_TIMESTAMP`,
   {
     usuarioId: user.id,
     codigoHash,

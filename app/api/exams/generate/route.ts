@@ -1,4 +1,4 @@
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { invalidateDashboardCache } from "@/lib/cache";
@@ -254,7 +254,7 @@ export async function POST(request: Request) {
     });
 
     try {
-      await db.execute<ResultSetHeader>(
+      await db.execute<MutationResult>(
         `INSERT INTO provas
           (usuario_id, escola, professor, disciplina, assunto, dificuldade,
            quantidade_questoes, versao, data_prova, valor_avaliacao, dados_json, data_geracao)
@@ -278,10 +278,10 @@ export async function POST(request: Request) {
       const unknownColumn =
         insertError &&
         typeof insertError === "object" &&
-        (insertError as { code?: string }).code === "ER_BAD_FIELD_ERROR";
+        (insertError as { code?: string }).code === "42703";
       if (!unknownColumn) throw insertError;
 
-      await db.execute<ResultSetHeader>(
+      await db.execute<MutationResult>(
         `INSERT INTO provas
           (usuario_id, escola, professor, disciplina, assunto, dificuldade,
            quantidade_questoes, versao, data_prova, valor_avaliacao, data_geracao)

@@ -10,7 +10,7 @@ import type {
   GenerateExamRequest
 } from "@/types/exam";
 import type { Questao } from "@/types/question";
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -195,7 +195,7 @@ export async function DELETE(
       );
     }
 
-    await db.execute<ResultSetHeader>(
+    await db.execute<MutationResult>(
       `DELETE FROM provas
        WHERE id = :id AND usuario_id = :usuarioId`,
       {

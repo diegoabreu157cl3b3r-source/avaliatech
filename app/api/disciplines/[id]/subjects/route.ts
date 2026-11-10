@@ -1,4 +1,4 @@
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { cleanText } from "@/lib/sanitizers";
@@ -83,8 +83,8 @@ export async function POST(request: Request, context: RouteParams) {
       return fail("Este assunto já está cadastrado nesta disciplina.", 409);
     }
 
-    const [result] = await db.execute<ResultSetHeader>(
-      "INSERT INTO assuntos (disciplina_id, usuario_id, nome) VALUES (:disciplineId, :usuarioId, :nome)",
+    const [result] = await db.execute<MutationResult>(
+      "INSERT INTO assuntos (disciplina_id, usuario_id, nome) VALUES (:disciplineId, :usuarioId, :nome) RETURNING id",
       { disciplineId, usuarioId: user.id, nome }
     );
 

@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     }
 
     if (search) {
-      conditions.push(`${column} LIKE :search`);
+      conditions.push(`${column} ILIKE :search`);
       params.search = `%${search}%`;
     }
 
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       `SELECT DISTINCT ${column} AS value
        FROM questoes
        WHERE ${conditions.join(" AND ")}
-       ORDER BY ${column} ASC
+       ORDER BY value ASC
        LIMIT ${MAX_SUGGESTIONS}`,
       params
     );

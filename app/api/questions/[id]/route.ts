@@ -1,4 +1,4 @@
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { invalidateDashboardCache } from "@/lib/cache";
@@ -51,7 +51,7 @@ export async function PUT(request: Request, context: RouteContext) {
       correta: parsed.data.correta, disciplina: cleanText(parsed.data.disciplina),
       assunto: cleanText(parsed.data.assunto), dificuldade: parsed.data.dificuldade
     };
-    await db.execute<ResultSetHeader>(
+    await db.execute<MutationResult>(
       `UPDATE questoes SET pergunta = :pergunta, imagem = :imagem, alternativa_a = :alternativa_a, alternativa_b = :alternativa_b,
        alternativa_c = :alternativa_c, alternativa_d = :alternativa_d, correta = :correta, disciplina = :disciplina,
        assunto = :assunto, dificuldade = :dificuldade WHERE id = :id AND usuario_id = :usuarioId`,
@@ -79,7 +79,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       { id, usuarioId: user.id }
     );
     if (!current[0]) return fail("Questão não encontrada.", 404);
-    await db.execute<ResultSetHeader>("DELETE FROM questoes WHERE id = :id AND usuario_id = :usuarioId", { id, usuarioId: user.id });
+    await db.execute<MutationResult>("DELETE FROM questoes WHERE id = :id AND usuario_id = :usuarioId", { id, usuarioId: user.id });
     if (current[0].imagem) await removeQuestionImage(current[0].imagem);
 
     invalidateDashboardCache(user.id);

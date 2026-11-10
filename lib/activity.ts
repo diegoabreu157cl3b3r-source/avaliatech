@@ -1,5 +1,5 @@
 ﻿import { db } from "@/lib/db";
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 
 export type TipoAtividade =
   | "questao_criada"
@@ -15,7 +15,7 @@ export async function logActivity(
   descricao?: string | null
 ): Promise<void> {
   try {
-    await db.execute<ResultSetHeader>(
+    await db.execute<MutationResult>(
       `INSERT INTO atividades (usuario_id, tipo, titulo, descricao, created_at)
        VALUES (:usuarioId, :tipo, :titulo, :descricao, NOW())`,
       {

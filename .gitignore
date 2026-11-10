@@ -10,3 +10,6 @@ pnpm-debug.log*
 coverage
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+
+.npm-cache/
+.tmp/

@@ -1,4 +1,4 @@
-import type { ResultSetHeader } from "mysql2";
+import type { MutationResult } from "@/lib/db";
 import { db, query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { profileSchema } from "@/lib/validators";
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
     const logoBase64 = parsed.data.logoBase64 ?? current.logo_base64;
     const logoMime = parsed.data.logoMime ?? current.logo_mime;
 
-    const [result] = await db.execute<ResultSetHeader>(
+    const [result] = await db.execute<MutationResult>(
       `UPDATE usuarios
        SET nome = :nome, email = :email, senha_hash = :senhaHash, logo_base64 = :logoBase64, logo_mime = :logoMime
        WHERE id = :id`,

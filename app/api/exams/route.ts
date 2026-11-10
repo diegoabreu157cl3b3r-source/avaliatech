@@ -1,4 +1,4 @@
-import type { ExecuteValues } from "mysql2";
+import type { DbValue } from "@/lib/db";
 import { query } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { fail, handleApiError, ok } from "@/lib/response";
@@ -22,11 +22,11 @@ export async function GET(request: Request) {
     const periodo = searchParams.get("periodo")?.trim() || "";
 
     const whereClauses: string[] = ["usuario_id = :usuarioId"];
-    const params: Record<string, ExecuteValues> = { usuarioId: user.id };
+    const params: Record<string, DbValue> = { usuarioId: user.id };
 
     if (search) {
       whereClauses.push(
-        "(escola LIKE :search OR professor LIKE :search OR disciplina LIKE :search OR assunto LIKE :search)"
+        "(escola ILIKE :search OR professor ILIKE :search OR disciplina ILIKE :search OR assunto ILIKE :search)"
       );
       params.search = `%${search}%`;
     }
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     }
 
     if (assunto && assunto !== "Todos") {
-      whereClauses.push("assunto LIKE :assuntoPattern");
+      whereClauses.push("assunto ILIKE :assuntoPattern");
       params.assuntoPattern = `%${assunto}%`;
     }
 
@@ -52,11 +52,11 @@ export async function GET(request: Request) {
     }
 
     if (periodo === "7d") {
-      whereClauses.push("created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+      whereClauses.push("created_at >= (NOW() - INTERVAL '7 days')");
     } else if (periodo === "30d") {
-      whereClauses.push("created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+      whereClauses.push("created_at >= (NOW() - INTERVAL '30 days')");
     } else if (periodo === "90d") {
-      whereClauses.push("created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)");
+      whereClauses.push("created_at >= (NOW() - INTERVAL '90 days')");
     }
 
     const whereSql = whereClauses.join(" AND ");

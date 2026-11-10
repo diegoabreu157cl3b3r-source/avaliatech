@@ -27,9 +27,9 @@ export async function GET() {
       // 1. Consolidated totals for questions, disciplines and subjects
       query<{ totalQuestoes: number; totalDisciplinas: number; totalAssuntos: number }[]>(
         `SELECT
-           COUNT(*) AS totalQuestoes,
-           COUNT(DISTINCT disciplina) AS totalDisciplinas,
-           COUNT(DISTINCT assunto) AS totalAssuntos
+           COUNT(*) AS "totalQuestoes",
+           COUNT(DISTINCT disciplina) AS "totalDisciplinas",
+           COUNT(DISTINCT assunto) AS "totalAssuntos"
          FROM questoes
          WHERE usuario_id = :usuarioId`,
         { usuarioId: user.id }
